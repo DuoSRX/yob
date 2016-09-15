@@ -1,6 +1,7 @@
 use std;
 use std::fmt;
 
+use memory::Memory;
 use registers::{Registers, Register8, Register16};
 
 // TODO: Shit ton of instructions
@@ -10,13 +11,25 @@ use registers::{Registers, Register8, Register16};
 
 pub struct Cpu {
     registers: Registers,
+    memory: Memory,
 }
 
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
-            registers: Registers::new()
+            registers: Registers::new(),
+            memory: Memory::new(),
         }
+    }
+
+    fn load_byte_and_inc_pc(&mut self) -> u8 {
+        let pc = self.registers.pc;
+        self.registers.pc += 1;
+        self.load_byte(pc)
+    }
+
+    fn load_byte(&mut self, address: u16) -> u8 {
+        self.memory.load(address)
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
@@ -31,16 +44,25 @@ impl Cpu {
             // 0x03 => self.inc(BC),
             0x04 => self.inc(B),
             0x05 => self.dec(B),
+            0x06 => self.ld(B, ImmediateStorage),
             0x0C => self.inc(C),
             0x0D => self.dec(C),
+            0x0E => self.ld(C, ImmediateStorage),
             0x14 => self.inc(D),
             0x15 => self.dec(D),
+            0x16 => self.ld(D, ImmediateStorage),
             0x1C => self.inc(E),
             0x1D => self.dec(E),
+            0x1E => self.ld(E, ImmediateStorage),
             0x24 => self.inc(H),
             0x25 => self.dec(H),
+            0x26 => self.ld(H, ImmediateStorage),
             0x2C => self.inc(L),
             0x2D => self.dec(L),
+            0x2E => self.ld(L, ImmediateStorage),
+            0x3C => self.inc(A),
+            0x3D => self.dec(A),
+            0x3E => self.ld(A, ImmediateStorage),
 
             0x40 => self.ld(B, B),
             0x41 => self.ld(B, C),
@@ -91,7 +113,6 @@ impl Cpu {
             // 0x6E TODO: LD L,(HL)
             0x6F => self.ld(L, A),
 
-
             instr => panic!("{}: Instruction not implemented yet", instr)
         }
     }
@@ -121,6 +142,15 @@ impl Cpu {
 pub trait Storage {
     fn load(&self, &mut Cpu) -> u8;
     fn store(&self, &mut Cpu, u8);
+}
+
+struct ImmediateStorage;
+impl Storage for ImmediateStorage {
+    fn load(&self, cpu: &mut Cpu) -> u8 {
+        cpu.load_byte_and_inc_pc()
+    }
+    // I wonder if I should split Storage in Input/Output to avoid this?
+    fn store(&self, _cpu: &mut Cpu, _value: u8) { panic!("Can't store immediae") }
 }
 
 impl Storage for Register8 {
