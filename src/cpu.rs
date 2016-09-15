@@ -123,7 +123,22 @@ impl Cpu {
             // 0x6E TODO: LD L,(HL)
             0x6F => self.ld(L, A),
 
+            0x80 => self.add(B),
+            0x81 => self.add(C),
+            0x82 => self.add(D),
+            0x83 => self.add(E),
+            0x84 => self.add(H),
+            0x85 => self.add(L),
+            // 0x86 => TODO: ADD A,(HL)
             0x87 => self.add(A),
+
+            0x88 => self.adc(B),
+            0x89 => self.adc(C),
+            0x8A => self.adc(D),
+            0x8B => self.adc(E),
+            0x8C => self.adc(H),
+            0x8D => self.adc(L),
+            // 0x8E => TODO: ADC A,(HL)
             0x8F => self.adc(A),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
@@ -141,18 +156,21 @@ impl Cpu {
         a.store(self, value);
     }
 
+    // TODO: Merge ADD and ADC. (Maybe have a carry argument?)
     fn add<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
-        self.registers.a = self.registers.a.wrapping_add(value);
+        let result = value as u16 + self.registers.a as u16 as u16;
+        self.registers.set_carry(result & 0x100 != 0);
+        self.registers.set_zero(result == 0);
+        self.registers.a = (result as u8) &0xFF;
     }
 
     fn adc<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
-        let carry = self.registers.carry();
-        let result = self.registers.a.wrapping_add(value).wrapping_add(carry);
-        self.registers.set_zero(value == 0);
-        self.registers.set_carry(self.registers.a as u16, value as u16);
-        self.registers.a = result;
+        let result = value as u16 + self.registers.a as u16 + self.registers.carry() as u16;
+        self.registers.set_carry(result & 0x100 != 0);
+        self.registers.set_zero(result == 0);
+        self.registers.a = (result as u8) & 0xFF;
     }
 
     fn inc<S: Storage>(&mut self, storage: S) {

@@ -44,20 +44,20 @@ impl Registers {
         }
     }
 
-    pub fn set_zero(&mut self, condition: bool) {
+    fn set_flag_if(&mut self, flag: u8, condition: bool) {
         if condition {
-            self.f |= ZERO_FLAG;
+            self.f |= flag;
         } else {
-            self.f &= !ZERO_FLAG;
+            self.f &= !flag;
         }
     }
 
-    pub fn set_carry(&mut self, a: u16, b: u16) {
-        if a + b + self.carry() as u16 > 0xFF {
-            self.f |= CARRY_FLAG;
-        } else {
-            self.f &= !CARRY_FLAG;
-        }
+    pub fn set_zero(&mut self, condition: bool) {
+        self.set_flag_if(ZERO_FLAG, condition);
+    }
+
+    pub fn set_carry(&mut self, condition: bool) {
+        self.set_flag_if(CARRY_FLAG, condition);
     }
 
     pub fn carry(&self) -> u8 {
