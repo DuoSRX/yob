@@ -11,8 +11,8 @@ use registers::{Registers, Register8, Register16};
 // TODO: Flag management in INC, DEC, LD and... all the rest
 
 pub struct Cpu {
-    registers: Registers,
-    memory: Memory,
+    pub registers: Registers,
+    pub memory: Memory,
 }
 
 impl Cpu {
@@ -23,21 +23,21 @@ impl Cpu {
         }
     }
 
-    fn load_byte_and_inc_pc(&mut self) -> u8 {
+    pub fn load_byte_and_inc_pc(&mut self) -> u8 {
         let pc = self.registers.pc;
         self.registers.pc += 1;
         self.load_byte(pc)
     }
 
-    fn load_byte(&mut self, address: u16) -> u8 {
+    pub fn load_byte(&mut self, address: u16) -> u8 {
         self.memory.load(address)
     }
 
-    fn store_byte(&mut self, address: u16, value: u8) {
+    pub fn store_byte(&mut self, address: u16, value: u8) {
         self.memory.store(address, value);
     }
 
-    fn step(&mut self) {
+    pub fn step(&mut self) {
         let instr = self.load_byte_and_inc_pc();
         println!("Executing {:02x}", instr);
         self.execute_instruction(instr);
@@ -197,64 +197,5 @@ impl Storage for Register8 {
 impl fmt::Debug for Cpu {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}", self.registers))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use cpu::Cpu;
-
-    fn reset() -> Cpu { Cpu::new() }
-
-    fn step(cpu: &mut Cpu, instr: u8, steps: u16) {
-        let pc = cpu.registers.pc;
-        cpu.store_byte(0, instr);
-        cpu.step();
-        let steps_taken = cpu.registers.pc - pc;
-        assert_eq!(steps_taken, steps);
-    }
-
-    #[test]
-    fn inc_a() {
-        let mut cpu = reset();
-        cpu.registers.a = 0x7;
-        step(&mut cpu, 0x3C, 1);
-        assert_eq!(cpu.registers.a, 0x8);
-
-        let mut cpu = reset();
-        cpu.registers.a = 0xFF;
-        step(&mut cpu, 0x3C, 1);
-        assert_eq!(cpu.registers.a, 0);
-        assert_eq!(cpu.registers.f, 1 << 7);
-    }
-
-    #[test]
-    fn dec_a() {
-        let mut cpu = reset();
-        cpu.registers.a = 0x7;
-        step(&mut cpu, 0x3D, 1);
-        assert_eq!(cpu.registers.a, 0x6);
-
-        let mut cpu = reset();
-        cpu.registers.a = 0x1;
-        step(&mut cpu, 0x3D, 1);
-        assert_eq!(cpu.registers.a, 0x0);
-        assert_eq!(cpu.registers.f, 1 << 7);
-    }
-
-    #[test]
-    fn ld_b_immediate() {
-        let mut cpu = reset();
-        cpu.store_byte(0x1, 0x42);
-        step(&mut cpu, 0x06, 2);
-        assert_eq!(cpu.registers.b, 0x42);
-    }
-
-    #[test]
-    fn ld_ba() {
-        let mut cpu = reset();
-        cpu.registers.a = 0x42;
-        step(&mut cpu, 0x47, 1);
-        assert_eq!(cpu.registers.b, cpu.registers.a);
     }
 }
