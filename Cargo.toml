@@ -1,0 +1,14 @@
+[package]
+name = "yob"
+version = "0.1.0"
+authors = ["Xavier Perez <duosrx@gmail.com>"]
+
+[lib]
+name = "yob"
+
+[dependencies]
+sdl2 = "0.18.0"
+time = "*"
+
+[profile.release]
+debug = true
