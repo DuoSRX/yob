@@ -44,7 +44,7 @@ impl Registers {
         }
     }
 
-    pub fn set_zero_flag(&mut self, condition: bool) {
+    pub fn set_zero(&mut self, condition: bool) {
         if condition {
             self.f |= ZERO_FLAG;
         } else {
@@ -52,17 +52,29 @@ impl Registers {
         }
     }
 
-    fn bc(&self) -> u16 {
-        ((self.b as u16) << 8) | (self.c as u16)
+    pub fn set_carry(&mut self, a: u16, b: u16) {
+        if a + b + self.carry() as u16 > 0xFF {
+            self.f |= CARRY_FLAG;
+        } else {
+            self.f &= !CARRY_FLAG;
+        }
     }
 
-    fn de(&self) -> u16 {
-        ((self.d as u16) << 8) | (self.e as u16)
+    pub fn carry(&self) -> u8 {
+        if self.f & CARRY_FLAG != 0 { 1 } else { 0 }
     }
 
-    fn hl(&self) -> u16 {
-        ((self.h as u16) << 8) | (self.l as u16)
-    }
+    // fn bc(&self) -> u16 {
+    //     ((self.b as u16) << 8) | (self.c as u16)
+    // }
+
+    // fn de(&self) -> u16 {
+    //     ((self.d as u16) << 8) | (self.e as u16)
+    // }
+
+    // fn hl(&self) -> u16 {
+    //     ((self.h as u16) << 8) | (self.l as u16)
+    // }
 }
 
 impl fmt::Debug for Registers {

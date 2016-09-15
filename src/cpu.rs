@@ -2,7 +2,7 @@ use std;
 use std::fmt;
 
 use memory::Memory;
-use registers::{Registers, Register8, Register16};
+use registers::{Registers, Register8};
 
 // TODO: Shit ton of instructions
 // TODO: CB Instructions
@@ -44,8 +44,7 @@ impl Cpu {
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
-        use registers::Register8::{A,B,C,D,E,F,H,L};
-        use registers::Register16::{AF,BC,DE,HL};
+        use registers::Register8::{A,B,C,D,E,H,L};
 
         match instr {
             0x00 => { }, // NOP
@@ -124,6 +123,9 @@ impl Cpu {
             // 0x6E TODO: LD L,(HL)
             0x6F => self.ld(L, A),
 
+            0x87 => self.add(A),
+            0x8F => self.adc(A),
+
             instr => panic!("{}: Instruction not implemented yet", instr)
         }
     }
@@ -139,15 +141,29 @@ impl Cpu {
         a.store(self, value);
     }
 
+    fn add<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        self.registers.a = self.registers.a.wrapping_add(value);
+    }
+
+    fn adc<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        let carry = self.registers.carry();
+        let result = self.registers.a.wrapping_add(value).wrapping_add(carry);
+        self.registers.set_zero(value == 0);
+        self.registers.set_carry(self.registers.a as u16, value as u16);
+        self.registers.a = result;
+    }
+
     fn inc<S: Storage>(&mut self, storage: S) {
         let value = storage.load(self).wrapping_add(1);
-        self.registers.set_zero_flag(value == 0);
+        self.registers.set_zero(value == 0);
         storage.store(self, value);
     }
 
     fn dec<S: Storage>(&mut self, storage: S) {
         let value = storage.load(self).wrapping_sub(1);
-        self.registers.set_zero_flag(value == 0);
+        self.registers.set_zero(value == 0);
         storage.store(self, value);
     }
 }

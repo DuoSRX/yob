@@ -57,3 +57,35 @@ fn ld_ba() {
     step(&mut cpu, 0x47, 1);
     assert_eq!(cpu.registers.b, cpu.registers.a);
 }
+
+#[test]
+fn add_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x2;
+    cpu.registers.f |= CARRY_FLAG;
+    step(&mut cpu, 0x87, 1);
+    assert_eq!(cpu.registers.a, 0x4);
+    assert_eq!(cpu.registers.carry(), 0);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0xFF;
+    step(&mut cpu, 0x87, 1);
+    assert_eq!(cpu.registers.a, 0x0);
+    assert_eq!(cpu.registers.carry(), 1);
+}
+
+#[test]
+fn adc_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x2;
+    cpu.registers.f |= CARRY_FLAG;
+    step(&mut cpu, 0x8F, 1);
+    assert_eq!(cpu.registers.a, 0x5);
+    assert_eq!(cpu.registers.carry(), 1);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0xFF;
+    step(&mut cpu, 0x8F, 1);
+    assert_eq!(cpu.registers.a, 0x0);
+    assert_eq!(cpu.registers.carry(), 1);
+}
