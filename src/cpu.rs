@@ -140,13 +140,15 @@ impl Cpu {
     }
 
     fn inc<S: Storage>(&mut self, storage: S) {
-        let value = storage.load(self);
-        storage.store(self, value.wrapping_add(1));
+        let value = storage.load(self).wrapping_add(1);
+        self.registers.set_zero_flag(value == 0);
+        storage.store(self, value);
     }
 
     fn dec<S: Storage>(&mut self, storage: S) {
-        let value = storage.load(self);
-        storage.store(self, value.wrapping_sub(1));
+        let value = storage.load(self).wrapping_sub(1);
+        self.registers.set_zero_flag(value == 0);
+        storage.store(self, value);
     }
 }
 
@@ -218,7 +220,34 @@ mod test {
         cpu.registers.a = 0x7;
         step(&mut cpu, 0x3C, 1);
         assert_eq!(cpu.registers.a, 0x8);
-        // TODO: Test flags
+
+        let mut cpu = reset();
+        cpu.registers.a = 0xFF;
+        step(&mut cpu, 0x3C, 1);
+        assert_eq!(cpu.registers.a, 0);
+        assert_eq!(cpu.registers.f, 1 << 7);
+    }
+
+    #[test]
+    fn dec_a() {
+        let mut cpu = reset();
+        cpu.registers.a = 0x7;
+        step(&mut cpu, 0x3D, 1);
+        assert_eq!(cpu.registers.a, 0x6);
+
+        let mut cpu = reset();
+        cpu.registers.a = 0x1;
+        step(&mut cpu, 0x3D, 1);
+        assert_eq!(cpu.registers.a, 0x0);
+        assert_eq!(cpu.registers.f, 1 << 7);
+    }
+
+    #[test]
+    fn ld_b_immediate() {
+        let mut cpu = reset();
+        cpu.store_byte(0x1, 0x42);
+        step(&mut cpu, 0x06, 2);
+        assert_eq!(cpu.registers.b, 0x42);
     }
 
     #[test]

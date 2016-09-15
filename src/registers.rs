@@ -4,7 +4,7 @@ use std::fmt;
 pub const ZERO_FLAG:       u8 = 0b1000_0000;
 pub const SUB_FLAG:        u8 = 0b0100_0000;
 pub const HALF_CARRY_FLAG: u8 = 0b0010_0000;
-pub const CARRY_FLAG:      u8 = 0b0001_000;
+pub const CARRY_FLAG:      u8 = 0b0001_0000;
 
 pub enum Register8 {
     A, B, C, D, E, F, H, L
@@ -41,6 +41,14 @@ impl Registers {
             l: 0,
             pc: 0,
             sp: 0
+        }
+    }
+
+    pub fn set_zero_flag(&mut self, condition: bool) {
+        if condition {
+            self.f |= ZERO_FLAG;
+        } else {
+            self.f &= !ZERO_FLAG;
         }
     }
 
