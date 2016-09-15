@@ -59,6 +59,16 @@ fn ld_ba() {
 }
 
 #[test]
+fn ld_b_hl() {
+    let mut cpu = reset();
+    cpu.registers.h = 0x15;
+    cpu.registers.l = 0x20;
+    cpu.store_byte((0x15 << 8) | 0x20 , 0x42);
+    step(&mut cpu, 0x46, 1);
+    assert_eq!(cpu.registers.b, 0x42);
+}
+
+#[test]
 fn add_b() {
     let mut cpu = reset();
     cpu.registers.a = 0x2;

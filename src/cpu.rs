@@ -2,7 +2,7 @@ use std;
 use std::fmt;
 
 use memory::Memory;
-use registers::{Registers, Register8};
+use registers::{Registers, Register8, Register16};
 
 // TODO: Shit ton of instructions
 // TODO: CB Instructions
@@ -45,6 +45,7 @@ impl Cpu {
 
     pub fn execute_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
+        use registers::Register16::{HL};
 
         match instr {
             0x00 => { }, // NOP
@@ -80,7 +81,7 @@ impl Cpu {
             0x43 => self.ld(B, E),
             0x44 => self.ld(B, H),
             0x45 => self.ld(B, L),
-            // 0x46 TODO: LD B,(HL)
+            0x46 => self.ld(B, HL),
             0x47 => self.ld(B, A),
             0x48 => self.ld(C, B),
             0x49 => self.ld(C, C),
@@ -88,7 +89,7 @@ impl Cpu {
             0x4B => self.ld(C, E),
             0x4C => self.ld(C, H),
             0x4D => self.ld(C, L),
-            // 0x4E TODO: LD C,(HL)
+            0x4E => self.ld(C, HL),
             0x4F => self.ld(C, A),
             0x50 => self.ld(D, B),
             0x51 => self.ld(D, C),
@@ -96,7 +97,7 @@ impl Cpu {
             0x53 => self.ld(D, E),
             0x54 => self.ld(D, H),
             0x55 => self.ld(D, L),
-            // 0x56 TODO: LD D,(HL)
+            0x56 => self.ld(D, HL),
             0x57 => self.ld(D, A),
             0x58 => self.ld(E, B),
             0x59 => self.ld(E, C),
@@ -104,7 +105,7 @@ impl Cpu {
             0x5B => self.ld(E, E),
             0x5C => self.ld(E, H),
             0x5D => self.ld(E, L),
-            // 0x5E TODO: LD E,(HL)
+            0x5E => self.ld(E, HL),
             0x5F => self.ld(E, A),
             0x60 => self.ld(H, B),
             0x61 => self.ld(H, C),
@@ -112,7 +113,7 @@ impl Cpu {
             0x63 => self.ld(H, E),
             0x64 => self.ld(H, H),
             0x65 => self.ld(H, L),
-            // 0x66 TODO: LD H,(HL)
+            0x66 => self.ld(H, HL),
             0x67 => self.ld(H, A),
             0x68 => self.ld(L, B),
             0x69 => self.ld(L, C),
@@ -120,7 +121,7 @@ impl Cpu {
             0x6B => self.ld(L, E),
             0x6C => self.ld(L, H),
             0x6D => self.ld(L, L),
-            // 0x6E TODO: LD L,(HL)
+            0x6E => self.ld(L, HL),
             0x6F => self.ld(L, A),
 
             0x80 => self.add(B),
@@ -129,7 +130,7 @@ impl Cpu {
             0x83 => self.add(E),
             0x84 => self.add(H),
             0x85 => self.add(L),
-            // 0x86 => TODO: ADD A,(HL)
+            0x86 => self.add(HL),
             0x87 => self.add(A),
 
             0x88 => self.adc(B),
@@ -138,7 +139,7 @@ impl Cpu {
             0x8B => self.adc(E),
             0x8C => self.adc(H),
             0x8D => self.adc(L),
-            // 0x8E => TODO: ADC A,(HL)
+            0x8E => self.adc(HL),
             0x8F => self.adc(A),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
@@ -225,6 +226,26 @@ impl Storage for Register8 {
             Register8::H => cpu.registers.h = value,
             Register8::L => cpu.registers.l = value,
         }
+    }
+}
+
+impl Storage for Register16 {
+    fn load(&self, cpu: &mut Cpu) -> u8 {
+        let address = match *self {
+            Register16::BC => cpu.registers.bc(),
+            Register16::DE => cpu.registers.de(),
+            Register16::HL => cpu.registers.hl(),
+        };
+        cpu.load_byte(address)
+    }
+
+    fn store(&self, cpu: &mut Cpu, value: u8) {
+        let address = match *self {
+            Register16::BC => cpu.registers.bc(),
+            Register16::DE => cpu.registers.de(),
+            Register16::HL => cpu.registers.hl(),
+        };
+        cpu.store_byte(address, value)
     }
 }
 

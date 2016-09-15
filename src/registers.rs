@@ -11,7 +11,7 @@ pub enum Register8 {
 }
 
 pub enum Register16 {
-    AF, BC, DE, HL, SP
+    BC, DE, HL
 }
 
 pub struct Registers {
@@ -64,17 +64,17 @@ impl Registers {
         if self.f & CARRY_FLAG != 0 { 1 } else { 0 }
     }
 
-    // fn bc(&self) -> u16 {
-    //     ((self.b as u16) << 8) | (self.c as u16)
-    // }
+    pub fn bc(&self) -> u16 {
+        ((self.b as u16) << 8) | (self.c as u16)
+    }
 
-    // fn de(&self) -> u16 {
-    //     ((self.d as u16) << 8) | (self.e as u16)
-    // }
+    pub fn de(&self) -> u16 {
+        ((self.d as u16) << 8) | (self.e as u16)
+    }
 
-    // fn hl(&self) -> u16 {
-    //     ((self.h as u16) << 8) | (self.l as u16)
-    // }
+    pub fn hl(&self) -> u16 {
+        ((self.h as u16) << 8) | (self.l as u16)
+    }
 }
 
 impl fmt::Debug for Registers {
