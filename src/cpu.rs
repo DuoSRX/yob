@@ -71,6 +71,15 @@ impl Cpu {
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
+        let prefix: u16 = (instr as u16) >> 8;
+
+        match prefix {
+            0xCB => self.execute_cb_instruction(instr),
+            _    => self.execute_regular_instruction(instr),
+        }
+    }
+
+    fn execute_regular_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
         use registers::Register16::{AF,BC,DE,HL};
 
