@@ -193,3 +193,23 @@ fn cp_b() {
     step(&mut cpu, 0xB8, 1);
     assert!(cpu.registers.test_flag(ZERO_FLAG));
 }
+
+#[test]
+fn push_hl() {
+    let mut cpu = reset();
+    cpu.registers.h = 0x12;
+    cpu.registers.l = 0x34;
+    step(&mut cpu, 0xE5, 1);
+    let byte = cpu.load_word(0xFFFD);
+    assert_eq!(byte, 0x1234)
+}
+
+#[test]
+fn pop_hl() {
+    let mut cpu = reset();
+    let byte = cpu.store_word(0xFFFC, 0x1234);
+    cpu.registers.sp = 0xFFFC;
+    step(&mut cpu, 0xE1, 1);
+    println!("{:?}", cpu);
+    assert_eq!(cpu.registers.hl(), 0x1234);
+}

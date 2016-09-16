@@ -11,7 +11,7 @@ pub enum Register8 {
 }
 
 pub enum Register16 {
-    BC, DE, HL
+    AF, BC, DE, HL
 }
 
 pub struct Registers {
@@ -40,7 +40,7 @@ impl Registers {
             h: 0,
             l: 0,
             pc: 0,
-            sp: 0
+            sp: 0xFFFE,
         }
     }
 
@@ -68,6 +68,10 @@ impl Registers {
         if self.f & flag != 0 { true } else { false }
     }
 
+    pub fn af(&self) -> u16 {
+        ((self.a as u16) << 8) | (self.f as u16)
+    }
+
     pub fn bc(&self) -> u16 {
         ((self.b as u16) << 8) | (self.c as u16)
     }
@@ -78,6 +82,28 @@ impl Registers {
 
     pub fn hl(&self) -> u16 {
         ((self.h as u16) << 8) | (self.l as u16)
+    }
+
+    // Not sure how I feel about these being here
+    pub fn load_16(&self, register: Register16) -> u16 {
+        match register {
+            Register16::AF => self.af(),
+            Register16::BC => self.bc(),
+            Register16::DE => self.de(),
+            Register16::HL => self.hl(),
+        }
+    }
+
+    pub fn store_16(&mut self, register: Register16, value: u16) {
+        let lo = (value & 0xFF) as u8;
+        let hi = ((value >> 8) & 0xFF) as u8;
+
+        match register {
+            Register16::AF => { self.a = hi; self.f = lo },
+            Register16::BC => { self.b = hi; self.c = lo },
+            Register16::DE => { self.d = hi; self.e = lo },
+            Register16::HL => { self.h = hi; self.l = lo },
+        }
     }
 }
 

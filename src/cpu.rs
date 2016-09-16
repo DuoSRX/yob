@@ -37,6 +37,19 @@ impl Cpu {
         self.memory.store(address, value);
     }
 
+    pub fn load_word(&mut self, address: u16) -> u16 {
+        let hi = (self.memory.load(address + 1) as u16) << 8;
+        let lo = self.memory.load(address) as u16;
+        hi | lo
+    }
+
+    pub fn store_word(&mut self, address: u16, value: u16) {
+        let lo = value & 0xFF;
+        let hi = (value >> 8) & 0xFF;
+        self.store_byte(address, lo as u8);
+        self.store_byte(address + 1, hi as u8);
+    }
+
     pub fn step(&mut self) {
         let instr = self.load_byte_and_inc_pc();
         println!("Executing {:02x}", instr);
@@ -45,7 +58,7 @@ impl Cpu {
 
     pub fn execute_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
-        use registers::Register16::{BC,DE,HL};
+        use registers::Register16::{AF,BC,DE,HL};
 
         match instr {
             0x00 => { }, // NOP
@@ -241,13 +254,30 @@ impl Cpu {
             0xBE => self.cp(HL),
             0xBF => self.cp(A),
 
+            0xC1 => self.pop(BC),
+
+            0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
             0xCE => self.adc(ImmediateStorage),
+
+            0xD1 => self.pop(DE),
+
+            0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
             0xDE => self.sbc(ImmediateStorage),
+
+            0xE1 => self.pop(HL),
+
+            0xE5 => self.push(HL),
             0xE6 => self.and(ImmediateStorage),
+
             0xEE => self.xor(ImmediateStorage),
+
+            0xF5 => self.push(AF),
             0xF6 => self.or(ImmediateStorage),
+
+            0xF1 => self.pop(AF),
+
             0xFE => self.cp(ImmediateStorage),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
@@ -263,6 +293,20 @@ impl Cpu {
     fn ld<In: Storage, Out: Storage>(&mut self, a: Out, b: In) {
         let value = b.load(self);
         a.store(self, value);
+    }
+
+    fn pop(&mut self, register: Register16) {
+        let sp = self.registers.sp;
+        let word = self.load_word(sp);
+        self.registers.sp += 2;
+        self.registers.store_16(register, word);
+    }
+
+    fn push(&mut self, register: Register16) {
+        let sp = self.registers.sp.wrapping_sub(1);
+        let value = self.registers.load_16(register);
+        self.store_word(sp, value);
+        self.registers.sp -= 2;
     }
 
     fn and<S: Storage>(&mut self, s: S) {
@@ -383,6 +427,7 @@ impl Storage for Register8 {
 impl Storage for Register16 {
     fn load(&self, cpu: &mut Cpu) -> u8 {
         let address = match *self {
+            Register16::AF => cpu.registers.af(),
             Register16::BC => cpu.registers.bc(),
             Register16::DE => cpu.registers.de(),
             Register16::HL => cpu.registers.hl(),
@@ -392,6 +437,7 @@ impl Storage for Register16 {
 
     fn store(&self, cpu: &mut Cpu, value: u8) {
         let address = match *self {
+            Register16::AF => cpu.registers.af(),
             Register16::BC => cpu.registers.bc(),
             Register16::DE => cpu.registers.de(),
             Register16::HL => cpu.registers.hl(),
