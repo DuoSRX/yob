@@ -207,9 +207,19 @@ fn push_hl() {
 #[test]
 fn pop_hl() {
     let mut cpu = reset();
-    let byte = cpu.store_word(0xFFFC, 0x1234);
+    cpu.store_word(0xFFFC, 0x1234);
     cpu.registers.sp = 0xFFFC;
     step(&mut cpu, 0xE1, 1);
     println!("{:?}", cpu);
     assert_eq!(cpu.registers.hl(), 0x1234);
+}
+
+#[test]
+fn ret() {
+    let mut cpu = reset();
+    cpu.store_word(0xFFFC, 0x0);
+    cpu.registers.sp = 0xFFFC;
+    step(&mut cpu, 0xC9, 0);
+    println!("{:?}", cpu);
+    assert_eq!(cpu.registers.pc, 0);
 }

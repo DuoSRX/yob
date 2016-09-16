@@ -37,6 +37,13 @@ impl Cpu {
         self.memory.store(address, value);
     }
 
+    pub fn pop_byte(&mut self) -> u8 {
+        let sp = self.registers.sp;
+        let byte = self.load_byte(sp);
+        self.registers.sp += 1;
+        byte
+    }
+
     pub fn load_word(&mut self, address: u16) -> u16 {
         let hi = (self.memory.load(address + 1) as u16) << 8;
         let lo = self.memory.load(address) as u16;
@@ -48,6 +55,13 @@ impl Cpu {
         let hi = (value >> 8) & 0xFF;
         self.store_byte(address, lo as u8);
         self.store_byte(address + 1, hi as u8);
+    }
+
+    pub fn pop_word(&mut self) -> u16 {
+        let sp = self.registers.sp;
+        let word = self.load_word(sp);
+        self.registers.sp += 2;
+        word
     }
 
     pub fn step(&mut self) {
@@ -125,7 +139,7 @@ impl Cpu {
             0x3C => self.inc(A),
             0x3D => self.dec(A),
             0x3E => self.ld(A, ImmediateStorage),
-            // 0x3F => CCF,
+            // 0x3F => self.ccf(),
             0x40 => self.ld(B, B),
             0x41 => self.ld(B, C),
             0x42 => self.ld(B, D),
@@ -190,7 +204,6 @@ impl Cpu {
             0x7D => self.ld(A, L),
             0x7E => self.ld(A, HL),
             0x7F => self.ld(A, A), // NOP?
-
             0x80 => self.add(B),
             0x81 => self.add(C),
             0x82 => self.add(D),
@@ -207,7 +220,6 @@ impl Cpu {
             0x8D => self.adc(L),
             0x8E => self.adc(HL),
             0x8F => self.adc(A),
-
             0x90 => self.sub(B),
             0x91 => self.sub(C),
             0x92 => self.sub(D),
@@ -224,7 +236,6 @@ impl Cpu {
             0x9D => self.sbc(L),
             0x9E => self.sbc(HL),
             0x9F => self.sbc(A),
-
             0xA0 => self.and(B),
             0xA1 => self.and(C),
             0xA2 => self.and(D),
@@ -266,11 +277,11 @@ impl Cpu {
             0xC6 => self.add(ImmediateStorage),
             // 0xC7 => RST &00
             // 0xC8 => RET Z
-            // 0xC9 => RET
+            0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
             // 0xCB => ????
             // 0xCC=> CALL Z,&0000,
-            //0xCD => CALL &0000,
+            // 0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
             // 0xCF => RST &08,
             // 0xD0 => RET NC
@@ -422,6 +433,10 @@ impl Cpu {
         let value = storage.load(self).wrapping_sub(1);
         self.registers.set_zero(value == 0);
         storage.store(self, value);
+    }
+
+    fn ret(&mut self) {
+        self.registers.pc = self.pop_word();
     }
 }
 
