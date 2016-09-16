@@ -190,6 +190,23 @@ impl Cpu {
             0x8E => self.adc(HL),
             0x8F => self.adc(A),
 
+            0x90 => self.sub(B),
+            0x91 => self.sub(C),
+            0x92 => self.sub(D),
+            0x93 => self.sub(E),
+            0x94 => self.sub(H),
+            0x95 => self.sub(L),
+            0x96 => self.sub(HL),
+            0x97 => self.sub(A),
+            0x98 => self.sbc(B),
+            0x99 => self.sbc(C),
+            0x9A => self.sbc(D),
+            0x9B => self.sbc(E),
+            0x9C => self.sbc(H),
+            0x9D => self.sbc(L),
+            0x9E => self.sbc(HL),
+            0x9F => self.sbc(A),
+
             instr => panic!("{}: Instruction not implemented yet", instr)
         }
     }
@@ -208,7 +225,7 @@ impl Cpu {
     // TODO: Merge ADD and ADC. (Maybe have a carry argument?)
     fn add<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
-        let result = value as u16 + self.registers.a as u16 as u16;
+        let result = value as u16 + self.registers.a as u16;
         self.registers.set_carry(result & 0x100 != 0);
         self.registers.set_zero(result == 0);
         self.registers.a = (result as u8) &0xFF;
@@ -217,6 +234,23 @@ impl Cpu {
     fn adc<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
         let result = value as u16 + self.registers.a as u16 + self.registers.carry() as u16;
+        self.registers.set_carry(result & 0x100 != 0);
+        self.registers.set_zero(result == 0);
+        self.registers.a = (result as u8) & 0xFF;
+    }
+
+    // TODO: Merge SUB and SBC. (Maybe have a carry argument?)
+    fn sub<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        let result = (self.registers.a as u16).wrapping_sub(value as u16);
+        self.registers.set_carry(result & 0x100 != 0);
+        self.registers.set_zero(result == 0);
+        self.registers.a = (result as u8) & 0xFF;
+    }
+
+    fn sbc<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        let result = (self.registers.a as u16).wrapping_sub(value as u16).wrapping_sub(self.registers.carry() as u16);
         self.registers.set_carry(result & 0x100 != 0);
         self.registers.set_zero(result == 0);
         self.registers.a = (result as u8) & 0xFF;

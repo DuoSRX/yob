@@ -69,6 +69,17 @@ fn ld_b_hl() {
 }
 
 #[test]
+fn ld_bc_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x42;
+    cpu.registers.b = 0x15;
+    cpu.registers.c = 0x20;
+    step(&mut cpu, 0x02, 1);
+    let byte = cpu.load_byte((0x15 << 8) | 0x20);
+    assert_eq!(byte, 0x42);
+}
+
+#[test]
 fn add_b() {
     let mut cpu = reset();
     cpu.registers.a = 0x2;
@@ -101,5 +112,41 @@ fn adc_b() {
     cpu.registers.b = 0x01;
     step(&mut cpu, 0x88, 1);
     assert_eq!(cpu.registers.a, 0x0);
+    assert_eq!(cpu.registers.carry(), 1);
+}
+
+#[test]
+fn sub_b() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x3;
+    cpu.registers.b = 0x1;
+    cpu.registers.set_carry(true);
+    step(&mut cpu, 0x90, 1);
+    assert_eq!(cpu.registers.a, 0x2);
+    assert_eq!(cpu.registers.carry(), 0);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0x01;
+    cpu.registers.b = 0x02;
+    step(&mut cpu, 0x90, 1);
+    assert_eq!(cpu.registers.a, 0xFF);
+    assert_eq!(cpu.registers.carry(), 1);
+}
+
+#[test]
+fn sbc_b() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x3;
+    cpu.registers.b = 0x1;
+    cpu.registers.set_carry(true);
+    step(&mut cpu, 0x98, 1);
+    assert_eq!(cpu.registers.a, 0x1);
+    assert_eq!(cpu.registers.carry(), 0);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0x01;
+    cpu.registers.b = 0x02;
+    step(&mut cpu, 0x98, 1);
+    assert_eq!(cpu.registers.a, 0xFF);
     assert_eq!(cpu.registers.carry(), 1);
 }
