@@ -381,46 +381,47 @@ impl Cpu {
         self.registers.set_zero(value == 0);
     }
 
-    // TODO: Merge ADD and ADC. (Maybe have a carry argument?)
-    fn add<S: Storage>(&mut self, s: S) {
-        let value = s.load(self);
-        let result = value as u16 + self.registers.a as u16;
+    // Generic addition for ADD and SBC
+    fn add_op(&mut self, value: u8, carry: bool) {
+        let mut result = (value as u16).wrapping_add(self.registers.a as u16);
+        if carry { result = result.wrapping_add(self.registers.carry() as u16) }
         self.registers.set_carry(result & 0x100 != 0);
         self.registers.set_zero(result == 0);
-        self.registers.a = (result as u8) &0xFF;
+        self.registers.a = (result as u8) & 0xFF;
+    }
+
+    fn add<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        self.add_op(value, false);
     }
 
     fn adc<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
-        let result = value as u16 + self.registers.a as u16 + self.registers.carry() as u16;
-        self.registers.set_carry(result & 0x100 != 0);
-        self.registers.set_zero(result == 0);
-        self.registers.a = (result as u8) & 0xFF;
+        self.add_op(value, true);
     }
 
-    // TODO: Merge SUB and SBC. (Maybe have a carry argument?)
-    fn sub<S: Storage>(&mut self, s: S) {
-        let value = s.load(self);
-        let result = (self.registers.a as u16).wrapping_sub(value as u16);
+    // Generic subtraction for SUB, SBC and CP
+    fn sub_op(&mut self, value: u8, carry: bool) -> u8 {
+        let mut result = (self.registers.a as u16).wrapping_sub(value as u16);
+        if carry { result = result.wrapping_sub(self.registers.carry() as u16) }
         self.registers.set_carry(result & 0x100 != 0);
         self.registers.set_zero(result == 0);
-        self.registers.a = (result as u8) & 0xFF;
+        (result as u8) & 0xFF
+    }
+
+    fn sub<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        self.registers.a = self.sub_op(value, false);
     }
 
     fn sbc<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
-        let result = (self.registers.a as u16).wrapping_sub(value as u16).wrapping_sub(self.registers.carry() as u16);
-        self.registers.set_carry(result & 0x100 != 0);
-        self.registers.set_zero(result == 0);
-        self.registers.a = (result as u8) & 0xFF;
+        self.registers.a = self.sub_op(value, true);
     }
 
-    // TODO: Reuse SUB?
     fn cp<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
-        let result = (self.registers.a as u16).wrapping_sub(value as u16);
-        self.registers.set_carry(result & 0x100 != 0);
-        self.registers.set_zero(result == 0);
+        self.sub_op(value, false);
     }
 
     fn inc<S: Storage>(&mut self, storage: S) {

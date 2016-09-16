@@ -192,6 +192,7 @@ fn cp_b() {
     cpu.registers.b = 0x2;
     step(&mut cpu, 0xB8, 1);
     assert!(cpu.registers.test_flag(ZERO_FLAG));
+    assert_eq!(cpu.registers.a, 0x2); // Make sure CP doesn't write to A
 }
 
 #[test]
