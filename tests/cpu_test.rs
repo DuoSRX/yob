@@ -150,3 +150,30 @@ fn sbc_b() {
     assert_eq!(cpu.registers.a, 0xFF);
     assert_eq!(cpu.registers.carry(), 1);
 }
+
+#[test]
+fn and_b() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b1010_0001;
+    cpu.registers.b = 0b0001_0001;
+    step(&mut cpu, 0xA0, 1);
+    assert_eq!(cpu.registers.a, 0b0000_0001);
+}
+
+#[test]
+fn xor_b() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b1111_1111;
+    cpu.registers.b = 0b1110_1111;
+    step(&mut cpu, 0xA8, 1);
+    assert_eq!(cpu.registers.a, 0b0001_0000);
+}
+
+#[test]
+fn or_b() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b1010_0001;
+    cpu.registers.b = 0b0001_0001;
+    step(&mut cpu, 0xB0, 1);
+    assert_eq!(cpu.registers.a, 0b1011_0001);
+}

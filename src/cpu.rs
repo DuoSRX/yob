@@ -207,6 +207,31 @@ impl Cpu {
             0x9E => self.sbc(HL),
             0x9F => self.sbc(A),
 
+            0xA0 => self.and(B),
+            0xA1 => self.and(C),
+            0xA2 => self.and(D),
+            0xA3 => self.and(E),
+            0xA4 => self.and(H),
+            0xA5 => self.and(L),
+            0xA6 => self.and(HL),
+            0xA7 => self.and(A),
+            0xA8 => self.xor(B),
+            0xA9 => self.xor(C),
+            0xAA => self.xor(D),
+            0xAB => self.xor(E),
+            0xAC => self.xor(H),
+            0xAD => self.xor(L),
+            0xAE => self.xor(HL),
+            0xAF => self.xor(A),
+            0xB0 => self.or(B),
+            0xB1 => self.or(C),
+            0xB2 => self.or(D),
+            0xB3 => self.or(E),
+            0xB4 => self.or(H),
+            0xB5 => self.or(L),
+            0xB6 => self.or(HL),
+            0xB7 => self.or(A),
+
             instr => panic!("{}: Instruction not implemented yet", instr)
         }
     }
@@ -220,6 +245,24 @@ impl Cpu {
     fn ld<In: Storage, Out: Storage>(&mut self, a: Out, b: In) {
         let value = b.load(self);
         a.store(self, value);
+    }
+
+    fn and<S: Storage>(&mut self, s: S) {
+        let value = self.registers.a & s.load(self);
+        self.registers.a = value;
+        self.registers.set_zero(value == 0);
+    }
+
+    fn or<S: Storage>(&mut self, s: S) {
+        let value = self.registers.a | s.load(self);
+        self.registers.a = value;
+        self.registers.set_zero(value == 0);
+    }
+
+    fn xor<S: Storage>(&mut self, s: S) {
+        let value = self.registers.a ^ s.load(self);
+        self.registers.a = value;
+        self.registers.set_zero(value == 0);
     }
 
     // TODO: Merge ADD and ADC. (Maybe have a carry argument?)
