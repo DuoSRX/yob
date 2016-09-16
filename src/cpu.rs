@@ -352,15 +352,15 @@ impl Cpu {
     fn pop(&mut self, register: Register16) {
         let sp = self.registers.sp;
         let word = self.load_word(sp);
-        self.registers.sp += 2;
+        self.registers.sp = sp.wrapping_add(2);
         self.registers.store_16(register, word);
     }
 
     fn push(&mut self, register: Register16) {
-        let sp = self.registers.sp.wrapping_sub(1);
+        let sp = self.registers.sp.wrapping_sub(2);
         let value = self.registers.load_16(register);
         self.store_word(sp, value);
-        self.registers.sp -= 2;
+        self.registers.sp = sp;
     }
 
     fn and<S: Storage>(&mut self, s: S) {

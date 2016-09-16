@@ -200,8 +200,9 @@ fn push_hl() {
     cpu.registers.h = 0x12;
     cpu.registers.l = 0x34;
     step(&mut cpu, 0xE5, 1);
-    let byte = cpu.load_word(0xFFFD);
-    assert_eq!(byte, 0x1234)
+    let byte = cpu.load_word(0xFFFC);
+    assert_eq!(byte, 0x1234);
+    assert_eq!(cpu.registers.sp, 0xFFFC);
 }
 
 #[test]
@@ -212,6 +213,7 @@ fn pop_hl() {
     step(&mut cpu, 0xE1, 1);
     println!("{:?}", cpu);
     assert_eq!(cpu.registers.hl(), 0x1234);
+    assert_eq!(cpu.registers.sp, 0xFFFC + 2);
 }
 
 #[test]
