@@ -212,7 +212,6 @@ fn pop_hl() {
     cpu.store_word(0xFFFC, 0x1234);
     cpu.registers.sp = 0xFFFC;
     step(&mut cpu, 0xE1, 1);
-    println!("{:?}", cpu);
     assert_eq!(cpu.registers.hl(), 0x1234);
     assert_eq!(cpu.registers.sp, 0xFFFC + 2);
 }
@@ -223,6 +222,67 @@ fn ret() {
     cpu.store_word(0xFFFC, 0x0);
     cpu.registers.sp = 0xFFFC;
     step(&mut cpu, 0xC9, 0);
-    println!("{:?}", cpu);
     assert_eq!(cpu.registers.pc, 0);
+}
+
+#[test]
+fn rlca() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b1000_0010;
+    step(&mut cpu, 0x07, 1);
+    assert_eq!(cpu.registers.a, 0b0000_0101);
+    assert_eq!(cpu.registers.carry(), 1);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0b0100_0010;
+    step(&mut cpu, 0x07, 1);
+    assert_eq!(cpu.registers.a, 0b1000_0100);
+    assert_eq!(cpu.registers.carry(), 0);
+}
+
+#[test]
+fn rrca() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b0010_0001;
+    step(&mut cpu, 0x0F, 1);
+    assert_eq!(cpu.registers.a, 0b1001_0000);
+    assert_eq!(cpu.registers.carry(), 1);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0b0010_0010;
+    step(&mut cpu, 0x0F, 1);
+    assert_eq!(cpu.registers.a, 0b0001_0001);
+    assert_eq!(cpu.registers.carry(), 0);
+}
+
+#[test]
+fn rla() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b0111_0110;
+    cpu.registers.set_carry(true);
+    step(&mut cpu, 0x17, 1);
+    assert_eq!(cpu.registers.a, 0b1110_1101);
+    assert_eq!(cpu.registers.carry(), 0);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0b1111_0110;
+    step(&mut cpu, 0x17, 1);
+    assert_eq!(cpu.registers.a, 0b1110_1100);
+    assert_eq!(cpu.registers.carry(), 1);
+}
+
+#[test]
+fn rra() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b1110_0001;
+    step(&mut cpu, 0x1F, 1);
+    assert_eq!(cpu.registers.a, 0b0111_0000);
+    assert_eq!(cpu.registers.carry(), 1);
+
+    let mut cpu = reset();
+    cpu.registers.a = 0b1110_0000;
+    cpu.registers.set_carry(true);
+    step(&mut cpu, 0x1F, 1);
+    assert_eq!(cpu.registers.a, 0b1111_0000);
+    assert_eq!(cpu.registers.carry(), 0);
 }

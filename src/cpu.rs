@@ -92,7 +92,7 @@ impl Cpu {
             0x04 => self.inc(B),
             0x05 => self.dec(B),
             0x06 => self.ld(B, ImmediateStorage),
-            // 0x07 => RLCA
+            0x07 => self.rlca(),
             // 0x08 => LD (nn), SP
             // 0x09 => self.add(HL, BC),
             0x0A => self.ld(A, BC),
@@ -100,7 +100,7 @@ impl Cpu {
             0x0C => self.inc(C),
             0x0D => self.dec(C),
             0x0E => self.ld(C, ImmediateStorage),
-            // 0x0F => RRCA
+            0x0F => self.rrca(),
             // 0x10 => STOP
             // 0x11 => LD DE,&0000
             0x12 => self.ld(DE, A),
@@ -108,7 +108,7 @@ impl Cpu {
             0x14 => self.inc(D),
             0x15 => self.dec(D),
             0x16 => self.ld(D, ImmediateStorage),
-            // 0x17 => RLA,
+            0x17 => self.rla(),
             // 0x18 => JR   &4546,
             // 0x19 => self.add(HL, DE),
             0x1A => self.ld(A, DE),
@@ -116,7 +116,7 @@ impl Cpu {
             0x1C => self.inc(E),
             0x1D => self.dec(E),
             0x1E => self.ld(E, ImmediateStorage),
-            // 0x1F => RRA,
+            0x1F => self.rra(),
             // 0x20 => JR NZ,&4546
             // 0x21 => LD HL,*0000
             // 0x22 => LDI (HL),A
@@ -388,6 +388,38 @@ impl Cpu {
         let value = self.registers.a ^ s.load(self);
         self.registers.a = value;
         self.registers.set_zero(value == 0);
+    }
+
+    fn rlca(&mut self) {
+        let value = self.registers.a.rotate_left(1);
+        self.registers.set_carry(value & 1 != 0);
+        self.registers.a = value;
+        // let a = self.registers.a;
+        // self.registers.set_carry(a & 0x80 != 0);
+        // self.registers.a = (a << 1) | self.registers.carry();
+    }
+
+    fn rrca(&mut self) {
+        let value = self.registers.a.rotate_right(1);
+        self.registers.set_carry(value & 0x80 != 0);
+        self.registers.a = value;
+        // let a = self.registers.a;
+        // self.registers.set_carry(a & 1 != 0);
+        // self.registers.a = (a >> 1) | (self.registers.carry() << 7);
+    }
+
+    fn rla(&mut self) {
+        let a = self.registers.a;
+        let value = (a << 1) | self.registers.carry();
+        self.registers.set_carry(a & 0x80 != 0);
+        self.registers.a = value;
+    }
+
+    fn rra(&mut self) {
+        let a = self.registers.a;
+        let value = (a >> 1) | (self.registers.carry() << 7);
+        self.registers.set_carry(a & 1 != 0);
+        self.registers.a = value;
     }
 
     // Generic addition for ADD and SBC
