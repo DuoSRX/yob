@@ -70,7 +70,7 @@ impl Cpu {
             0x05 => self.dec(B),
             0x06 => self.ld(B, ImmediateStorage),
             // 0x07 => RLCA
-            // 0x08 => EX AF, AF'
+            // 0x08 => LD (nn), SP
             // 0x09 => self.add(HL, BC),
             0x0A => self.ld(A, BC),
             0x0B => self.dec(BC),
@@ -78,14 +78,14 @@ impl Cpu {
             0x0D => self.dec(C),
             0x0E => self.ld(C, ImmediateStorage),
             // 0x0F => RRCA
-            // 0x10 => DJNZ &4546
-            // 0x11 => LD   DE,&0000
+            // 0x10 => STOP
+            // 0x11 => LD DE,&0000
             0x12 => self.ld(DE, A),
             0x13 => self.inc(DE),
             0x14 => self.inc(D),
             0x15 => self.dec(D),
             0x16 => self.ld(D, ImmediateStorage),
-            //0x17 => RLA,
+            // 0x17 => RLA,
             // 0x18 => JR   &4546,
             // 0x19 => self.add(HL, DE),
             0x1A => self.ld(A, DE),
@@ -94,13 +94,17 @@ impl Cpu {
             0x1D => self.dec(E),
             0x1E => self.ld(E, ImmediateStorage),
             // 0x1F => RRA,
+            // 0x20 => JR NZ,&4546
+            // 0x21 => LD HL,*0000
+            // 0x22 => LDI (HL),A
+            0x23 => self.inc(HL),
             0x24 => self.inc(H),
             0x25 => self.dec(H),
             0x26 => self.ld(H, ImmediateStorage),
             // 0x27 => DAA,
             // 0x28 => JR Z, &4546
             // 0x29 => self.add(HL, HL),
-            // 0x2A => LD HL,(&0000)
+            // 0x2A => LDI A,(HL)
             0x2B => self.dec(HL),
             0x2C => self.inc(L),
             0x2D => self.dec(L),
@@ -108,7 +112,7 @@ impl Cpu {
             // 0x2F => CPL,
             // 0x30 => JR NC,&4546,
             // 0x31 => LD SP,&0000
-            // 0x32 => LD (&0000),A
+            // 0x32 => LDD A,(HL)
             // 0x33 => self.inc(SP),
             0x34 => self.inc(HL),
             0x35 => self.dec(HL),
@@ -116,7 +120,7 @@ impl Cpu {
             // 0x37 => SCF,
             // 0x38 => JR C,&4546
             // 0x39 => self.add(HL, SP)
-            // 0x3A => LD A,(&0000)
+            // 0x3A => LDD A,(HL)
             // 0x3B => self.dec(SP),
             0x3C => self.inc(A),
             0x3D => self.dec(A),
@@ -253,31 +257,70 @@ impl Cpu {
             0xBD => self.cp(L),
             0xBE => self.cp(HL),
             0xBF => self.cp(A),
-
+            // 0xC0 => RET NZ
             0xC1 => self.pop(BC),
-
+            // 0xC2 => JP NZ,&0000
+            // 0xC3 => JP &0000
+            // 0xC4 => CALL NZ,&0000
             0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
+            // 0xC7 => RST &00
+            // 0xC8 => RET Z
+            // 0xC9 => RET
+            // 0xCA => JP Z,&0000
+            // 0xCB => ????
+            // 0xCC=> CALL Z,&0000,
+            //0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
-
+            // 0xCF => RST &08,
+            // 0xD0 => RET NC
             0xD1 => self.pop(DE),
-
+            // 0xD2 => JP NC,&0000,
+            // 0xD3 => illegal
+            // 0xD4 => CALL NC,&0000
             0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
+            // 0xD7 => RST &10
+            // 0xD8 => RET C
+            // 0xD9 => RETI
+            // 0xDA => JP C,&0000
+            // 0xDB => illegal
+            // 0xDC => CALL C,&0000
+            // 0xDD => illegal
             0xDE => self.sbc(ImmediateStorage),
-
+            // 0xDF => RST &18
+            // 0xE0 => LD (FF00+n),A
             0xE1 => self.pop(HL),
-
+            // 0xE2 => LD (FF00+C),A
+            // 0xE3 => illegal
+            // 0xE4 => illegal
             0xE5 => self.push(HL),
             0xE6 => self.and(ImmediateStorage),
-
+            // 0xE7 => RST &20
+            // 0xE8 => ADD SP,dd
+            // 0xE9 => JP (HL)
+            // 0xEA => LD (nn),A
+            // 0xEB => illegal
+            // 0xEC => illegal
+            // 0xED => illegal
             0xEE => self.xor(ImmediateStorage),
+            // 0xEF => RST &28
 
+            // Not familiar with z80 yet but I think this is zero page
+            // 0xF0 => LD A,(FF00+n)
+            0xF1 => self.pop(AF),
+            // 0xF2 => LD A,(FF00+C)
+            // 0xF3 => DI
+            // 0xF4 => illegal
             0xF5 => self.push(AF),
             0xF6 => self.or(ImmediateStorage),
-
-            0xF1 => self.pop(AF),
-
+            // 0xF7 => RST &30
+            // 0xF8 => LD HL,SP+dd
+            // 0xF9 => LD SP,HL
+            // 0xFA => LD A,(nn),
+            // 0xFB => EI
+            // 0xFC => illegal
+            // 0xFD => illegal
             0xFE => self.cp(ImmediateStorage),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
