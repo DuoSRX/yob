@@ -177,3 +177,19 @@ fn or_b() {
     step(&mut cpu, 0xB0, 1);
     assert_eq!(cpu.registers.a, 0b1011_0001);
 }
+
+
+#[test]
+fn cp_b() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x2;
+    cpu.registers.b = 0x1;
+    step(&mut cpu, 0xB8, 1);
+    assert!(!cpu.registers.test_flag(ZERO_FLAG));
+
+    let mut cpu = reset();
+    cpu.registers.a = 0x2;
+    cpu.registers.b = 0x2;
+    step(&mut cpu, 0xB8, 1);
+    assert!(cpu.registers.test_flag(ZERO_FLAG));
+}

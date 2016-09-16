@@ -5,9 +5,10 @@ use memory::Memory;
 use registers::{Registers, Register8, Register16};
 
 // TODO: CB Instructions
-// TODO: More addressing
-// TODO: All the 16 bit registers
 // TODO: Flag management
+// TODO: Interrupts
+// TODO: Stack manipulation instructions
+// TODO: Branching instructions
 
 pub struct Cpu {
     pub registers: Registers,
@@ -231,6 +232,23 @@ impl Cpu {
             0xB5 => self.or(L),
             0xB6 => self.or(HL),
             0xB7 => self.or(A),
+            0xB8 => self.cp(B),
+            0xB9 => self.cp(C),
+            0xBA => self.cp(D),
+            0xBB => self.cp(E),
+            0xBC => self.cp(H),
+            0xBD => self.cp(L),
+            0xBE => self.cp(HL),
+            0xBF => self.cp(A),
+
+            0xC6 => self.add(ImmediateStorage),
+            0xCE => self.adc(ImmediateStorage),
+            0xD6 => self.sub(ImmediateStorage),
+            0xDE => self.sbc(ImmediateStorage),
+            0xE6 => self.and(ImmediateStorage),
+            0xEE => self.xor(ImmediateStorage),
+            0xF6 => self.or(ImmediateStorage),
+            0xFE => self.cp(ImmediateStorage),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
         }
@@ -297,6 +315,14 @@ impl Cpu {
         self.registers.set_carry(result & 0x100 != 0);
         self.registers.set_zero(result == 0);
         self.registers.a = (result as u8) & 0xFF;
+    }
+
+    // TODO: Reuse SUB?
+    fn cp<S: Storage>(&mut self, s: S) {
+        let value = s.load(self);
+        let result = (self.registers.a as u16).wrapping_sub(value as u16);
+        self.registers.set_carry(result & 0x100 != 0);
+        self.registers.set_zero(result == 0);
     }
 
     fn inc<S: Storage>(&mut self, storage: S) {

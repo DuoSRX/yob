@@ -64,6 +64,10 @@ impl Registers {
         if self.f & CARRY_FLAG != 0 { 1 } else { 0 }
     }
 
+    pub fn test_flag(&self, flag: u8) -> bool {
+        if self.f & flag != 0 { true } else { false }
+    }
+
     pub fn bc(&self) -> u16 {
         ((self.b as u16) << 8) | (self.c as u16)
     }
