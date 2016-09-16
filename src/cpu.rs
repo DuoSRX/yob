@@ -4,11 +4,10 @@ use std::fmt;
 use memory::Memory;
 use registers::{Registers, Register8, Register16};
 
-// TODO: Shit ton of instructions
 // TODO: CB Instructions
-// TODO: Memory addressing
-// TODO: 16 bit registers
-// TODO: Flag management in INC, DEC, LD and... all the rest
+// TODO: More addressing
+// TODO: All the 16 bit registers
+// TODO: Flag management
 
 pub struct Cpu {
     pub registers: Registers,
@@ -45,36 +44,70 @@ impl Cpu {
 
     pub fn execute_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
-        use registers::Register16::{HL};
+        use registers::Register16::{BC,DE,HL};
 
         match instr {
             0x00 => { }, // NOP
 
-            // 0x01 TODO: LD BC,&0000
-            // 0x02 TODO: LD (BC),A
-            // 0x03 => self.inc(BC),
+            // 0x01 => LD BC,&0000
+            0x02 => self.ld(BC, A),
+            0x03 => self.inc(BC),
             0x04 => self.inc(B),
             0x05 => self.dec(B),
             0x06 => self.ld(B, ImmediateStorage),
+            // 0x07 => RLCA
+            // 0x08 => EX AF, AF'
+            // 0x09 => self.add(HL, BC),
+            0x0A => self.ld(A, BC),
+            0x0B => self.dec(BC),
             0x0C => self.inc(C),
             0x0D => self.dec(C),
             0x0E => self.ld(C, ImmediateStorage),
+            // 0x0F => RRCA
+            // 0x10 => DJNZ &4546
+            // 0x11 => LD   DE,&0000
+            0x12 => self.ld(DE, A),
+            0x13 => self.inc(DE),
             0x14 => self.inc(D),
             0x15 => self.dec(D),
             0x16 => self.ld(D, ImmediateStorage),
+            //0x17 => RLA,
+            // 0x18 => JR   &4546,
+            // 0x19 => self.add(HL, DE),
+            0x1A => self.ld(A, DE),
+            0x1B => self.dec(DE),
             0x1C => self.inc(E),
             0x1D => self.dec(E),
             0x1E => self.ld(E, ImmediateStorage),
+            // 0x1F => RRA,
             0x24 => self.inc(H),
             0x25 => self.dec(H),
             0x26 => self.ld(H, ImmediateStorage),
+            // 0x27 => DAA,
+            // 0x28 => JR Z, &4546
+            // 0x29 => self.add(HL, HL),
+            // 0x2A => LD HL,(&0000)
+            0x2B => self.dec(HL),
             0x2C => self.inc(L),
             0x2D => self.dec(L),
             0x2E => self.ld(L, ImmediateStorage),
+            // 0x2F => CPL,
+            // 0x30 => JR NC,&4546,
+            // 0x31 => LD SP,&0000
+            // 0x32 => LD (&0000),A
+            // 0x33 => self.inc(SP),
+            0x34 => self.inc(HL),
+            0x35 => self.dec(HL),
+            0x36 => self.ld(HL, ImmediateStorage),
+            // 0x37 => SCF,
+            // 0x38 => JR C,&4546
+            // 0x39 => self.add(HL, SP)
+            // 0x3A => LD A,(&0000)
+            // 0x3B => self.dec(SP),
             0x3C => self.inc(A),
             0x3D => self.dec(A),
             0x3E => self.ld(A, ImmediateStorage),
-
+            // 0x3F => CCF,
             0x40 => self.ld(B, B),
             0x41 => self.ld(B, C),
             0x42 => self.ld(B, D),
@@ -123,6 +156,22 @@ impl Cpu {
             0x6D => self.ld(L, L),
             0x6E => self.ld(L, HL),
             0x6F => self.ld(L, A),
+            0x70 => self.ld(HL, B),
+            0x71 => self.ld(HL, C),
+            0x72 => self.ld(HL, D),
+            0x73 => self.ld(HL, E),
+            0x74 => self.ld(HL, H),
+            0x75 => self.ld(HL, L),
+            // 0x76 => HALT,
+            0x77 => self.ld(HL, A),
+            0x78 => self.ld(A, B),
+            0x79 => self.ld(A, C),
+            0x7A => self.ld(A, D),
+            0x7B => self.ld(A, E),
+            0x7C => self.ld(A, H),
+            0x7D => self.ld(A, L),
+            0x7E => self.ld(A, HL),
+            0x7F => self.ld(A, A), // NOP?
 
             0x80 => self.add(B),
             0x81 => self.add(C),
@@ -132,7 +181,6 @@ impl Cpu {
             0x85 => self.add(L),
             0x86 => self.add(HL),
             0x87 => self.add(A),
-
             0x88 => self.adc(B),
             0x89 => self.adc(C),
             0x8A => self.adc(D),
