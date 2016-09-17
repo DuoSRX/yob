@@ -76,13 +76,13 @@ impl Cpu {
 
     pub fn execute_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
-        use registers::Register16::{AF,BC,DE,HL};
+        use registers::Register16::{AF,BC,DE,HL,SP};
 
         match instr {
             0x00 => { }, // NOP
             // 0x01 => LD BC,&0000
             0x02 => self.ld(BC, A),
-            0x03 => self.inc(BC),
+            0x03 => self.inc_16(BC),
             0x04 => self.inc(B),
             0x05 => self.dec(B),
             0x06 => self.ld(B, ImmediateStorage),
@@ -90,7 +90,7 @@ impl Cpu {
             // 0x08 => LD (nn), SP
             // 0x09 => self.add(HL, BC),
             0x0A => self.ld(A, BC),
-            0x0B => self.dec(BC),
+            0x0B => self.dec_16(BC),
             0x0C => self.inc(C),
             0x0D => self.dec(C),
             0x0E => self.ld(C, ImmediateStorage),
@@ -98,7 +98,7 @@ impl Cpu {
             0x10 => panic!("Got STOP!"),
             // 0x11 => LD DE,&0000
             0x12 => self.ld(DE, A),
-            0x13 => self.inc(DE),
+            0x13 => self.inc_16(DE),
             0x14 => self.inc(D),
             0x15 => self.dec(D),
             0x16 => self.ld(D, ImmediateStorage),
@@ -114,7 +114,7 @@ impl Cpu {
             // 0x20 => JR NZ,&4546
             // 0x21 => LD HL,*0000
             // 0x22 => LDI (HL),A
-            0x23 => self.inc(HL),
+            0x23 => self.inc_16(HL),
             0x24 => self.inc(H),
             0x25 => self.dec(H),
             0x26 => self.ld(H, ImmediateStorage),
@@ -122,7 +122,7 @@ impl Cpu {
             // 0x28 => JR Z, &4546
             // 0x29 => self.add(HL, HL),
             // 0x2A => LDI A,(HL)
-            0x2B => self.dec(HL),
+            0x2B => self.dec_16(HL),
             0x2C => self.inc(L),
             0x2D => self.dec(L),
             0x2E => self.ld(L, ImmediateStorage),
@@ -130,7 +130,7 @@ impl Cpu {
             // 0x30 => JR NC,&4546,
             // 0x31 => LD SP,&0000
             // 0x32 => LDD A,(HL)
-            // 0x33 => self.inc(SP),
+            0x33 => self.inc(SP),
             0x34 => self.inc(HL),
             0x35 => self.dec(HL),
             0x36 => self.ld(HL, ImmediateStorage),
@@ -138,7 +138,7 @@ impl Cpu {
             // 0x38 => JR C,&4546
             // 0x39 => self.add(HL, SP)
             // 0x3A => LDD A,(HL)
-            // 0x3B => self.dec(SP),
+            0x3B => self.dec_16(SP),
             0x3C => self.inc(A),
             0x3D => self.dec(A),
             0x3E => self.ld(A, ImmediateStorage),
@@ -465,9 +465,19 @@ impl Cpu {
         storage.store(self, value);
     }
 
+    fn inc_16<S: Storage>(&mut self, storage: S) {
+        let value = storage.load(self).wrapping_add(1);
+        storage.store(self, value);
+    }
+
     fn dec<S: Storage>(&mut self, storage: S) {
         let value = storage.load(self).wrapping_sub(1);
         self.registers.set_zero(value == 0);
+        storage.store(self, value);
+    }
+
+    fn dec_16<S: Storage>(&mut self, storage: S) {
+        let value = storage.load(self).wrapping_sub(1);
         storage.store(self, value);
     }
 
@@ -546,7 +556,9 @@ impl Storage for Register16 {
             Register16::BC => cpu.registers.bc(),
             Register16::DE => cpu.registers.de(),
             Register16::HL => cpu.registers.hl(),
+            Register16::SP => cpu.registers.sp,
         };
+
         cpu.load_byte(address)
     }
 
@@ -556,7 +568,9 @@ impl Storage for Register16 {
             Register16::BC => cpu.registers.bc(),
             Register16::DE => cpu.registers.de(),
             Register16::HL => cpu.registers.hl(),
+            Register16::SP => cpu.registers.sp,
         };
+
         cpu.store_byte(address, value)
     }
 }

@@ -11,7 +11,7 @@ pub enum Register8 {
 }
 
 pub enum Register16 {
-    AF, BC, DE, HL
+    AF, BC, DE, HL, SP
 }
 
 pub struct Registers {
@@ -91,6 +91,7 @@ impl Registers {
             Register16::BC => self.bc(),
             Register16::DE => self.de(),
             Register16::HL => self.hl(),
+            Register16::SP => self.sp,
         }
     }
 
@@ -103,6 +104,7 @@ impl Registers {
             Register16::BC => { self.b = hi; self.c = lo },
             Register16::DE => { self.d = hi; self.e = lo },
             Register16::HL => { self.h = hi; self.l = lo },
+            Register16::SP => { self.sp = value },
         }
     }
 }
