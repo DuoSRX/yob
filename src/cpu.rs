@@ -60,7 +60,7 @@ impl Cpu {
         self.store_byte(address + 1, hi as u8);
     }
 
-    fn push_word(&mut self, value: u16) {
+    pub fn push_word(&mut self, value: u16) {
         let sp = self.registers.sp.wrapping_sub(2);
         self.store_word(sp, value);
         self.registers.sp = sp;
@@ -275,7 +275,7 @@ impl Cpu {
             0xBD => self.cp(L),
             0xBE => self.cp(HL),
             0xBF => self.cp(A),
-            // 0xC0 => RET NZ
+            0xC0 => self.ret_cond(!ZERO_FLAG),
             0xC1 => self.pop(BC),
             // 0xC2 => JP NZ,&0000
             0xC3 => self.jp(),
@@ -283,7 +283,7 @@ impl Cpu {
             0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
             0xC7 => self.rst(0x00),
-            // 0xC8 => RET Z
+            0xC8 => self.ret_cond(ZERO_FLAG),
             0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
             0xCB => self.cb(),
@@ -291,7 +291,7 @@ impl Cpu {
             // 0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
             0xCF => self.rst(0x08),
-            // 0xD0 => RET NC
+            0xD0 => self.ret_cond(!CARRY_FLAG),
             0xD1 => self.pop(DE),
             // 0xD2 => JP NC,&0000,
             0xD3 => self.illegal(instr),
@@ -299,7 +299,7 @@ impl Cpu {
             0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
             0xD7 => self.rst(0x10),
-            // 0xD8 => RET C
+            0xD8 => self.ret_cond(CARRY_FLAG),
             0xD9 => self.reti(),
             // 0xDA => JP C,&0000
             0xDB => self.illegal(instr),
@@ -500,6 +500,12 @@ impl Cpu {
 
     fn ret(&mut self) {
         self.registers.pc = self.pop_word();
+    }
+
+    fn ret_cond(&mut self, flag: u8) {
+        if self.registers.test_flag(flag) {
+            self.ret();
+        }
     }
 
     fn reti(&mut self) {

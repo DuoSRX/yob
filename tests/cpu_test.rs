@@ -335,3 +335,17 @@ fn jp() {
     step(&mut cpu, 0xC3, 0x10);
     assert_eq!(cpu.registers.pc, 0x10);
 }
+
+#[test]
+fn ret_z() {
+    let mut cpu = reset();
+    cpu.push_word(0x10);
+    step(&mut cpu, 0xC8, 1);
+    assert_eq!(cpu.registers.pc, 0x01);
+
+    let mut cpu = reset();
+    cpu.registers.set_zero(true);
+    cpu.push_word(0x10);
+    step(&mut cpu, 0xC8, 0x10);
+    assert_eq!(cpu.registers.pc, 0x10);
+}
