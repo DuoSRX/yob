@@ -95,6 +95,44 @@ fn ld_bc_a() {
 }
 
 #[test]
+fn ld_a_zero_page() {
+    let mut cpu = reset();
+    cpu.store_byte(0x1, 0x5);
+    cpu.store_byte(0xFF05, 0x42);
+    step(&mut cpu, 0xF0, 2);
+    assert_eq!(cpu.registers.a, 0x42);
+}
+
+#[test]
+fn ld_a_zero_page_reg_c() {
+    let mut cpu = reset();
+    cpu.registers.c = 0x3;
+    cpu.store_byte(0xFF03, 0x42);
+    step(&mut cpu, 0xF2, 1);
+    assert_eq!(cpu.registers.a, 0x42);
+}
+
+#[test]
+fn ld_zero_page_to_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x42;
+    cpu.store_byte(0x1, 0x3);
+    step(&mut cpu, 0xE0, 2);
+    let byte = cpu.load_byte(0xFF03);
+    assert_eq!(byte, 0x42);
+}
+
+#[test]
+fn ld_zero_page_reg_c_to_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x42;
+    cpu.registers.c = 0x3;
+    step(&mut cpu, 0xE2, 1);
+    let byte = cpu.load_byte(0xFF03);
+    assert_eq!(byte, 0x42);
+}
+
+#[test]
 fn ld_sp_hl() {
     let mut cpu = reset();
     cpu.registers.store_16(Register16::HL, 0x1234);

@@ -313,9 +313,9 @@ impl Cpu {
             0xDD => self.illegal(instr),
             0xDE => self.sbc(ImmediateStorage),
             0xDF => self.rst(0x18),
-            // 0xE0 => LD (FF00+n),A
+            0xE0 => self.ld(Indirect::ZeroPage, A),
             0xE1 => self.pop(HL),
-            // 0xE2 => LD (FF00+C),A
+            0xE2 => self.ld(Indirect::ZeroPageRegC, A),
             0xE3 => self.illegal(instr),
             0xE4 => self.illegal(instr),
             0xE5 => self.push(HL),
@@ -329,10 +329,9 @@ impl Cpu {
             0xED => self.illegal(instr),
             0xEE => self.xor(ImmediateStorage),
             0xEF => self.rst(0x28),
-            // Not familiar with z80 yet but I think this is zero page?
-            // 0xF0 => LD A,(FF00+n)
+            0xF0 => self.ld(A, Indirect::ZeroPage),
             0xF1 => self.pop(AF),
-            // 0xF2 => LD A,(FF00+C)
+            0xF2 => self.ld(A, Indirect::ZeroPageRegC),
             0xF3 => self.di(),
             0xF4 => self.illegal(instr),
             0xF5 => self.push(AF),
@@ -340,7 +339,7 @@ impl Cpu {
             0xF7 => self.rst(0x30),
             // 0xF8 => LD HL,SP+dd
             0xF9 => self.ld_sp_hl(),
-            // 0xFA => LD A,(nn),
+            //0xFA => LD A,(nn),
             0xFB => self.ei(),
             0xFC => self.illegal(instr),
             0xFD => self.illegal(instr),
@@ -617,7 +616,8 @@ impl Cpu {
 
 pub trait Storage {
     fn load(&self, &mut Cpu) -> u8;
-    fn store(&self, &mut Cpu, u8);
+    // I wonder if I should split Storage in Input/Output to avoid this default impl?
+    fn store(&self, &mut Cpu, u8) { panic!("Impossible storage type") }
 }
 
 struct ImmediateStorage;
@@ -625,8 +625,35 @@ impl Storage for ImmediateStorage {
     fn load(&self, cpu: &mut Cpu) -> u8 {
         cpu.load_byte_and_inc_pc()
     }
-    // I wonder if I should split Storage in Input/Output to avoid this?
-    fn store(&self, _cpu: &mut Cpu, _value: u8) { panic!("Can't store immediate") }
+}
+
+pub enum Indirect { BC, DE, HL, ZeroPage, ZeroPageRegC }
+impl Storage for Indirect {
+    fn load(&self, cpu: &mut Cpu) -> u8 {
+        // TODO: Refactor this. I's duplicated in load and store. Put in CPU maybe?
+        let address = match *self {
+            Indirect::BC => cpu.registers.bc(),
+            Indirect::DE => cpu.registers.de(),
+            Indirect::HL => cpu.registers.hl(),
+            Indirect::ZeroPage => 0xFF00 as u16 | cpu.load_byte_and_inc_pc() as u16,
+            Indirect::ZeroPageRegC => 0xFF00 as u16 | cpu.registers.c as u16,
+        };
+
+        cpu.load_byte(address)
+    }
+
+    fn store(&self, cpu: &mut Cpu, value: u8) {
+        // TODO: Refactor this. I's duplicated in load and store. Put in CPU maybe?
+        let address = match *self {
+            Indirect::BC => cpu.registers.bc(),
+            Indirect::DE => cpu.registers.de(),
+            Indirect::HL => cpu.registers.hl(),
+            Indirect::ZeroPage => 0xFF00 as u16 | cpu.load_byte_and_inc_pc() as u16,
+            Indirect::ZeroPageRegC => 0xFF00 as u16 | cpu.registers.c as u16,
+        };
+
+        cpu.store_byte(address, value);
+    }
 }
 
 impl Storage for Register8 {
