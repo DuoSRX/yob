@@ -66,6 +66,14 @@ fn ld_b_immediate() {
 }
 
 #[test]
+fn ld_bc_immediate() {
+    let mut cpu = reset();
+    cpu.store_word(0x1, 0x1234);
+    step(&mut cpu, 0x01, 3);
+    assert_eq!(cpu.registers.bc(), 0x1234);
+}
+
+#[test]
 fn ld_ba() {
     let mut cpu = reset();
     cpu.registers.a = 0x42;
