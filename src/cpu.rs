@@ -321,7 +321,7 @@ impl Cpu {
             0xE5 => self.push(HL),
             0xE6 => self.and(ImmediateStorage),
             0xE7 => self.rst(0x20),
-            // 0xE8 => ADD SP,dd
+            0xE8 => self.add_sp(),
             0xE9 => self.jp_hl(),
             // 0xEA => LD (nn),A
             0xEB => self.illegal(instr),
@@ -339,7 +339,7 @@ impl Cpu {
             0xF6 => self.or(ImmediateStorage),
             0xF7 => self.rst(0x30),
             // 0xF8 => LD HL,SP+dd
-            // 0xF9 => LD SP,HL
+            0xF9 => self.ld_sp_hl(),
             // 0xFA => LD A,(nn),
             0xFB => self.ei(),
             0xFC => self.illegal(instr),
@@ -369,6 +369,11 @@ impl Cpu {
     fn ld<In: Storage, Out: Storage>(&mut self, a: Out, b: In) {
         let value = b.load(self);
         a.store(self, value);
+    }
+
+    fn ld_sp_hl(&mut self) {
+        let value = self.registers.hl();
+        self.registers.sp = value;
     }
 
     fn pop(&mut self, register: Register16) {
@@ -456,6 +461,17 @@ impl Cpu {
         let value = self.registers.load_16(register);
         let result = value.wrapping_add(hl);
         self.registers.store_16(Register16::HL, result);
+    }
+
+    // ADD SP, nn
+    fn add_sp(&mut self) {
+        // TODO: handle flags
+        let sp = self.registers.sp;
+        // Crazy trick to do signed addition.
+        // u8 -> i8 -> i16 -> u16
+        let value = self.load_byte_and_inc_pc() as i8 as i16 as u16;
+        let result = value.wrapping_add(sp);
+        self.registers.store_16(Register16::SP, result);
     }
 
     // Generic subtraction for SUB, SBC and CP
@@ -610,7 +626,7 @@ impl Storage for ImmediateStorage {
         cpu.load_byte_and_inc_pc()
     }
     // I wonder if I should split Storage in Input/Output to avoid this?
-    fn store(&self, _cpu: &mut Cpu, _value: u8) { panic!("Can't store immediae") }
+    fn store(&self, _cpu: &mut Cpu, _value: u8) { panic!("Can't store immediate") }
 }
 
 impl Storage for Register8 {

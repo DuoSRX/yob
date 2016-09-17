@@ -95,6 +95,14 @@ fn ld_bc_a() {
 }
 
 #[test]
+fn ld_sp_hl() {
+    let mut cpu = reset();
+    cpu.registers.store_16(Register16::HL, 0x1234);
+    step(&mut cpu, 0xF9, 1);
+    assert_eq!(cpu.registers.sp, 0x1234);
+}
+
+#[test]
 fn add_b() {
     let mut cpu = reset();
     cpu.registers.a = 0x2;
@@ -138,6 +146,15 @@ fn adc_b() {
     step(&mut cpu, 0x88, 1);
     assert_eq!(cpu.registers.a, 0x0);
     assert_eq!(cpu.registers.carry(), 1);
+}
+
+#[test]
+fn add_sp() {
+    let mut cpu = reset();
+    cpu.registers.sp = 0x02;
+    cpu.store_byte(0x1, 0x3);
+    step(&mut cpu, 0xE8, 2);
+    assert_eq!(cpu.registers.sp, 0x5);
 }
 
 #[test]
