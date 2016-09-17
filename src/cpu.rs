@@ -279,7 +279,7 @@ impl Cpu {
             0xC1 => self.pop(BC),
             // 0xC2 => JP NZ,&0000
             0xC3 => self.jp(),
-            // 0xC4 => CALL NZ,&0000
+            0xC4 => self.call_cond(!ZERO_FLAG),
             0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
             0xC7 => self.rst(0x00),
@@ -287,15 +287,15 @@ impl Cpu {
             0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
             0xCB => self.cb(),
-            // 0xCC => CALL Z,&0000,
-            // 0xCD => CALL &0000,
+            0xCC => self.call_cond(ZERO_FLAG),
+            0xCD => self.call(),
             0xCE => self.adc(ImmediateStorage),
             0xCF => self.rst(0x08),
             0xD0 => self.ret_cond(!CARRY_FLAG),
             0xD1 => self.pop(DE),
             // 0xD2 => JP NC,&0000,
             0xD3 => self.illegal(instr),
-            // 0xD4 => CALL NC,&0000
+            0xD4 => self.call_cond(!CARRY_FLAG),
             0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
             0xD7 => self.rst(0x10),
@@ -303,7 +303,7 @@ impl Cpu {
             0xD9 => self.reti(),
             // 0xDA => JP C,&0000
             0xDB => self.illegal(instr),
-            // 0xDC => CALL C,&0000
+            0xDC => self.call_cond(CARRY_FLAG),
             0xDD => self.illegal(instr),
             0xDE => self.sbc(ImmediateStorage),
             0xDF => self.rst(0x18),
@@ -496,6 +496,19 @@ impl Cpu {
     fn dec_16<S: Storage>(&mut self, storage: S) {
         let value = storage.load(self).wrapping_sub(1);
         storage.store(self, value);
+    }
+
+    fn call(&mut self) {
+        let pc = self.registers.pc;
+        let return_address = self.load_word(pc + 2);
+        self.push_word(return_address);
+        self.registers.pc = self.load_word(pc);
+    }
+
+    fn call_cond(&mut self, flag: u8) {
+        if self.registers.test_flag(flag) {
+            self.call();
+        }
     }
 
     fn ret(&mut self) {

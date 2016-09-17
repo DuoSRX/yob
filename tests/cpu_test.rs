@@ -349,3 +349,19 @@ fn ret_z() {
     step(&mut cpu, 0xC8, 0x10);
     assert_eq!(cpu.registers.pc, 0x10);
 }
+
+#[test]
+fn call_z() {
+    let mut cpu = reset();
+    step(&mut cpu, 0xC8, 0x1);
+    assert_eq!(cpu.registers.pc, 0x1);
+
+    let mut cpu = reset();
+    cpu.store_word(0x1, 0x10);
+    cpu.store_word(0x3, 0x5);
+    cpu.registers.set_zero(true);
+    step(&mut cpu, 0xCC, 0x10);
+    println!("{:?}", cpu);
+    assert_eq!(cpu.registers.pc, 0x10);
+    assert_eq!(cpu.pop_word(), 0x5);
+}
