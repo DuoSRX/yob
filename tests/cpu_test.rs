@@ -337,6 +337,14 @@ fn jp() {
 }
 
 #[test]
+fn jr() {
+    let mut cpu = reset();
+    cpu.store_word(0x01, 0x10);
+    step(&mut cpu, 0x18, 0x12);
+    assert_eq!(cpu.registers.pc, 0x12);
+}
+
+#[test]
 fn ret_z() {
     let mut cpu = reset();
     cpu.push_word(0x10);

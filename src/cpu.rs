@@ -113,7 +113,7 @@ impl Cpu {
             0x15 => self.dec(D),
             0x16 => self.ld(D, ImmediateStorage),
             0x17 => self.rla(),
-            // 0x18 => JR &4546,
+            0x18 => self.jr(),
             0x19 => self.add_hl(DE),
             0x1A => self.ld(A, DE),
             0x1B => self.dec(DE),
@@ -121,7 +121,7 @@ impl Cpu {
             0x1D => self.dec(E),
             0x1E => self.ld(E, ImmediateStorage),
             0x1F => self.rra(),
-            // 0x20 => JR NZ,&4546
+            0x20 => self.jr_cond(!ZERO_FLAG),
             // 0x21 => LD HL,*0000
             // 0x22 => LDI (HL),A
             0x23 => self.inc_16(HL),
@@ -129,7 +129,7 @@ impl Cpu {
             0x25 => self.dec(H),
             0x26 => self.ld(H, ImmediateStorage),
             // 0x27 => DAA,
-            // 0x28 => JR Z, &4546
+            0x28 => self.jr_cond(ZERO_FLAG),
             0x29 => self.add_hl(HL),
             // 0x2A => LDI A,(HL)
             0x2B => self.dec_16(HL),
@@ -137,7 +137,7 @@ impl Cpu {
             0x2D => self.dec(L),
             0x2E => self.ld(L, ImmediateStorage),
             0x2F => self.cpl(),
-            // 0x30 => JR NC,&4546,
+            0x30 => self.jr_cond(!CARRY_FLAG),
             // 0x31 => LD SP,&0000
             // 0x32 => LDD A,(HL)
             0x33 => self.inc(SP),
@@ -145,7 +145,7 @@ impl Cpu {
             0x35 => self.dec(HL),
             0x36 => self.ld(HL, ImmediateStorage),
             0x37 => self.scf(),
-            // 0x38 => JR C,&4546
+            0x38 => self.jr_cond(CARRY_FLAG),
             0x39 => self.add_hl(SP),
             // 0x3A => LDD A,(HL)
             0x3B => self.dec_16(SP),
@@ -283,7 +283,7 @@ impl Cpu {
             0xBF => self.cp(A),
             0xC0 => self.ret_cond(!ZERO_FLAG),
             0xC1 => self.pop(BC),
-            // 0xC2 => JP NZ,&0000
+            0xC2 => self.jp_cond(!ZERO_FLAG),
             0xC3 => self.jp(),
             0xC4 => self.call_cond(!ZERO_FLAG),
             0xC5 => self.push(BC),
@@ -291,7 +291,7 @@ impl Cpu {
             0xC7 => self.rst(0x00),
             0xC8 => self.ret_cond(ZERO_FLAG),
             0xC9 => self.ret(),
-            // 0xCA => JP Z,&0000
+            0xCA => self.jp_cond(ZERO_FLAG),
             0xCB => self.cb(),
             0xCC => self.call_cond(ZERO_FLAG),
             0xCD => self.call(),
@@ -299,7 +299,7 @@ impl Cpu {
             0xCF => self.rst(0x08),
             0xD0 => self.ret_cond(!CARRY_FLAG),
             0xD1 => self.pop(DE),
-            // 0xD2 => JP NC,&0000,
+            0xD2 => self.jp_cond(!CARRY_FLAG),
             0xD3 => self.illegal(instr),
             0xD4 => self.call_cond(!CARRY_FLAG),
             0xD5 => self.push(DE),
@@ -307,7 +307,7 @@ impl Cpu {
             0xD7 => self.rst(0x10),
             0xD8 => self.ret_cond(CARRY_FLAG),
             0xD9 => self.reti(),
-            // 0xDA => JP C,&0000
+            0xDA => self.jp_cond(CARRY_FLAG),
             0xDB => self.illegal(instr),
             0xDC => self.call_cond(CARRY_FLAG),
             0xDD => self.illegal(instr),
@@ -504,9 +504,34 @@ impl Cpu {
         storage.store(self, value);
     }
 
+    fn jp(&mut self) {
+        let address = self.load_word_and_inc_pc();
+        self.registers.pc = address;
+    }
+
+    fn jp_cond(&mut self, flag: u8) {
+        let address = self.load_word_and_inc_pc();
+
+        if self.registers.test_flag(flag) {
+            self.registers.pc = address;
+        }
+    }
+
+    fn jr(&mut self) {
+        let address = self.load_byte_and_inc_pc();
+        self.registers.pc += address as u16;
+    }
+
+    fn jr_cond(&mut self, flag: u8) {
+        let address = self.load_byte_and_inc_pc();
+
+        if self.registers.test_flag(flag) {
+            self.registers.pc += address as u16;
+        }
+    }
+
     fn call_op(&mut self, address: u16) {
-        let pc = self.registers.pc;
-        let return_address = self.load_word(pc);
+        let return_address = self.load_word_and_inc_pc();
         self.push_word(return_address);
         self.registers.pc = address;
     }
@@ -565,12 +590,6 @@ impl Cpu {
     fn rst(&mut self, address: u16) {
         let pc = self.registers.pc;
         self.push_word(pc);
-        self.registers.pc = address;
-    }
-
-    fn jp(&mut self) {
-        let pc = self.registers.pc;
-        let address = self.load_word(pc);
         self.registers.pc = address;
     }
 }
