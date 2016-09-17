@@ -317,3 +317,11 @@ fn rst() {
     assert_eq!(cpu.registers.pc, 0x38);
     assert_eq!(cpu.pop_word(), 1);
 }
+
+#[test]
+fn jp() {
+    let mut cpu = reset();
+    cpu.store_word(0x01, 0x10);
+    step(&mut cpu, 0xC3, 0x10);
+    assert_eq!(cpu.registers.pc, 0x10);
+}

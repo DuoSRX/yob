@@ -12,6 +12,7 @@ use registers::*;
 pub struct Cpu {
     pub registers: Registers,
     pub memory: Memory,
+    pub halt: bool,
 }
 
 impl Cpu {
@@ -19,6 +20,7 @@ impl Cpu {
         Cpu {
             registers: Registers::new(),
             memory: Memory::new(),
+            halt: false,
         }
     }
 
@@ -197,7 +199,7 @@ impl Cpu {
             0x73 => self.ld(HL, E),
             0x74 => self.ld(HL, H),
             0x75 => self.ld(HL, L),
-            // 0x76 => HALT,
+            0x76 => { self.halt = true },
             0x77 => self.ld(HL, A),
             0x78 => self.ld(A, B),
             0x79 => self.ld(A, C),
@@ -274,7 +276,7 @@ impl Cpu {
             // 0xC0 => RET NZ
             0xC1 => self.pop(BC),
             // 0xC2 => JP NZ,&0000
-            // 0xC3 => JP &0000
+            0xC3 => self.jp(),
             // 0xC4 => CALL NZ,&0000
             0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
@@ -503,6 +505,12 @@ impl Cpu {
     fn rst(&mut self, address: u16) {
         let pc = self.registers.pc;
         self.push_word(pc);
+        self.registers.pc = address;
+    }
+
+    fn jp(&mut self) {
+        let pc = self.registers.pc;
+        let address = self.load_word(pc);
         self.registers.pc = address;
     }
 }
