@@ -4,12 +4,11 @@ use std::fmt;
 use memory::Memory;
 use registers::*;
 
-// TODO: CB Instructions
-// TODO: Flag management
+// TODO: Flag management (haven't implemented N H Z)
 // TODO: Interrupts
-// TODO: Stack manipulation instructions
 // TODO: Branching instructions
-
+// TODO: More 16 bits operations
+// TODO: CB Instructions
 pub struct Cpu {
     pub registers: Registers,
     pub memory: Memory,
@@ -84,7 +83,6 @@ impl Cpu {
 
         match instr {
             0x00 => { }, // NOP
-
             // 0x01 => LD BC,&0000
             0x02 => self.ld(BC, A),
             0x03 => self.inc(BC),
@@ -100,7 +98,7 @@ impl Cpu {
             0x0D => self.dec(C),
             0x0E => self.ld(C, ImmediateStorage),
             0x0F => self.rrca(),
-            // 0x10 => STOP
+            0x10 => panic!("Got STOP!"),
             // 0x11 => LD DE,&0000
             0x12 => self.ld(DE, A),
             0x13 => self.inc(DE),
@@ -108,7 +106,7 @@ impl Cpu {
             0x15 => self.dec(D),
             0x16 => self.ld(D, ImmediateStorage),
             0x17 => self.rla(),
-            // 0x18 => JR   &4546,
+            // 0x18 => JR &4546,
             // 0x19 => self.add(HL, DE),
             0x1A => self.ld(A, DE),
             0x1B => self.dec(DE),
@@ -131,7 +129,7 @@ impl Cpu {
             0x2C => self.inc(L),
             0x2D => self.dec(L),
             0x2E => self.ld(L, ImmediateStorage),
-            // 0x2F => CPL,
+            0x2F => self.cpl(),
             // 0x30 => JR NC,&4546,
             // 0x31 => LD SP,&0000
             // 0x32 => LDD A,(HL)
@@ -324,8 +322,7 @@ impl Cpu {
             // 0xED => illegal
             0xEE => self.xor(ImmediateStorage),
             // 0xEF => RST &28
-
-            // Not familiar with z80 yet but I think this is zero page
+            // Not familiar with z80 yet but I think this is zero page?
             // 0xF0 => LD A,(FF00+n)
             0xF1 => self.pop(AF),
             // 0xF2 => LD A,(FF00+C)
@@ -489,6 +486,10 @@ impl Cpu {
     fn scf(&mut self) {
         // TODO: Reset N and H
         self.registers.set_carry(true);
+    }
+
+    fn cpl(&mut self) {
+        self.registers.a = !self.registers.a;
     }
 }
 

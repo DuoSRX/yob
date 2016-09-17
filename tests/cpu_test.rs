@@ -301,3 +301,11 @@ fn rra() {
     assert_eq!(cpu.registers.a, 0b1111_0000);
     assert_eq!(cpu.registers.carry(), 0);
 }
+
+#[test]
+fn cpl() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b0101_1010;
+    step(&mut cpu, 0x2F, 1);
+    assert_eq!(cpu.registers.a, 0b1010_0101);
+}
