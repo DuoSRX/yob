@@ -2,7 +2,7 @@ use std;
 use std::fmt;
 
 use memory::Memory;
-use registers::{Registers, Register8, Register16};
+use registers::*;
 
 // TODO: CB Instructions
 // TODO: Flag management
@@ -66,7 +66,6 @@ impl Cpu {
 
     pub fn step(&mut self) {
         let instr = self.load_byte_and_inc_pc();
-        println!("Executing {:02x}", instr);
         self.execute_instruction(instr);
     }
 
@@ -140,7 +139,7 @@ impl Cpu {
             0x34 => self.inc(HL),
             0x35 => self.dec(HL),
             0x36 => self.ld(HL, ImmediateStorage),
-            // 0x37 => SCF,
+            0x37 => self.scf(),
             // 0x38 => JR C,&4546
             // 0x39 => self.add(HL, SP)
             // 0x3A => LDD A,(HL)
@@ -148,7 +147,7 @@ impl Cpu {
             0x3C => self.inc(A),
             0x3D => self.dec(A),
             0x3E => self.ld(A, ImmediateStorage),
-            // 0x3F => self.ccf(),
+            0x3F => self.ccf(),
             0x40 => self.ld(B, B),
             0x41 => self.ld(B, C),
             0x42 => self.ld(B, D),
@@ -479,6 +478,17 @@ impl Cpu {
 
     fn ret(&mut self) {
         self.registers.pc = self.pop_word();
+    }
+
+    fn ccf(&mut self) {
+        // TODO: Reset N and H
+        let carry = self.registers.test_flag(CARRY_FLAG);
+        self.registers.set_carry(!carry);
+    }
+
+    fn scf(&mut self) {
+        // TODO: Reset N and H
+        self.registers.set_carry(true);
     }
 }
 

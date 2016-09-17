@@ -8,10 +8,25 @@ fn reset() -> Cpu { Cpu::new() }
 
 fn step(cpu: &mut Cpu, instr: u8, steps: u16) {
     let pc = cpu.registers.pc;
-    cpu.store_byte(0, instr);
+    cpu.store_byte(pc, instr);
     cpu.step();
     let steps_taken = cpu.registers.pc - pc;
     assert_eq!(steps_taken, steps);
+}
+
+#[test]
+fn flags_ops() {
+    let mut cpu = reset();
+    assert!(!cpu.registers.test_flag(CARRY_FLAG));
+    assert!(!cpu.registers.test_flag(ZERO_FLAG));
+
+    step(&mut cpu, 0x37, 1); // SCF
+    println!("{:?}", cpu);
+    assert!(cpu.registers.test_flag(CARRY_FLAG));
+
+    step(&mut cpu, 0x3F, 1); // CCF
+    println!("{:?}", cpu);
+    assert!(!cpu.registers.test_flag(CARRY_FLAG));
 }
 
 #[test]
