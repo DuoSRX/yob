@@ -37,7 +37,7 @@ impl Cpu {
             0x05 => self.dec(B),
             0x06 => self.ld(B, ImmediateStorage),
             0x07 => self.rlca(),
-            // 0x08 => LD (nn), SP
+            0x08 => self.ld_indirect_sp(),
             0x09 => self.add_hl(BC),
             0x0A => self.ld(A, BC),
             0x0B => self.dec_16(BC),
@@ -68,7 +68,7 @@ impl Cpu {
             0x24 => self.inc(H),
             0x25 => self.dec(H),
             0x26 => self.ld(H, ImmediateStorage),
-            // 0x27 => DAA,
+            0x27 => self.daa(),
             0x28 => self.jr_cond(ZERO_FLAG),
             0x29 => self.add_hl(HL),
             0x2A => self.ld(A, Indirect::HLI),
@@ -156,7 +156,7 @@ impl Cpu {
             0x7C => self.ld(A, H),
             0x7D => self.ld(A, L),
             0x7E => self.ld(A, HL),
-            0x7F => self.ld(A, A), // NOP?
+            0x7F => self.ld(A, A),
             0x80 => self.add(B),
             0x81 => self.add(C),
             0x82 => self.add(D),
@@ -277,7 +277,7 @@ impl Cpu {
             0xF5 => self.push(AF),
             0xF6 => self.or(ImmediateStorage),
             0xF7 => self.rst(0x30),
-            // 0xF8 => LD HL,SP+dd
+            0xF8 => self.ld_hl_sp(),
             0xF9 => self.ld_sp_hl(),
             0xFA => self.ld(A, Indirect::Immediate),
             0xFB => self.ei(),
@@ -377,9 +377,25 @@ impl Cpu {
         self.registers.sp = value;
     }
 
+    // LD HL,SP+e
+    fn ld_hl_sp(&mut self) {
+        // TODO: Handle flags
+        // FIXME: Signed arithmetics?
+        let offset = self.load_word_and_inc_pc();
+        let sp = self.registers.sp;
+        let address = offset.wrapping_add(sp);
+        self.registers.store_16(Register16::HL, address);
+    }
+
     fn ld_word_immediate(&mut self, register: Register16) {
         let value = self.load_word_and_inc_pc();
         self.registers.store_16(register, value);
+    }
+
+    fn ld_indirect_sp(&mut self) {
+        let value = self.registers.sp;
+        let address = self.load_word_and_inc_pc();
+        self.store_word(address, value);
     }
 
     fn pop(&mut self, register: Register16) {
@@ -618,5 +634,10 @@ impl Cpu {
         let pc = self.registers.pc;
         self.push_word(pc);
         self.registers.pc = address;
+    }
+
+    fn daa(&mut self) {
+        println!("{:?}", self);
+        panic!("DAA not implemented yet");
     }
 }

@@ -114,6 +114,16 @@ fn ld_a_indirect_immediate() {
 }
 
 #[test]
+fn ld_indirect_immediate_sp() {
+    let mut cpu = reset();
+    cpu.registers.sp = 0x1111;
+    cpu.store_word(0x1, 0x1234);
+    step(&mut cpu, 0x08, 3);
+    let byte = cpu.load_word(0x1234);
+    assert_eq!(byte, 0x1111);
+}
+
+#[test]
 fn ld_ba() {
     let mut cpu = reset();
     cpu.registers.a = 0x42;
@@ -186,6 +196,15 @@ fn ld_sp_hl() {
     cpu.registers.store_16(Register16::HL, 0x1234);
     step(&mut cpu, 0xF9, 1);
     assert_eq!(cpu.registers.sp, 0x1234);
+}
+
+#[test]
+fn ld_hl_sp() {
+    let mut cpu = reset();
+    cpu.registers.sp = 0x1234;
+    cpu.store_byte(0x1, 0x2);
+    step(&mut cpu, 0xF8, 3);
+    assert_eq!(cpu.registers.hl(), 0x1236);
 }
 
 #[test]
