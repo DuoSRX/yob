@@ -309,3 +309,11 @@ fn cpl() {
     step(&mut cpu, 0x2F, 1);
     assert_eq!(cpu.registers.a, 0b1010_0101);
 }
+
+#[test]
+fn rst() {
+    let mut cpu = reset();
+    step(&mut cpu, 0xFF, 0x38);
+    assert_eq!(cpu.registers.pc, 0x38);
+    assert_eq!(cpu.pop_word(), 1);
+}

@@ -56,6 +56,12 @@ impl Cpu {
         self.store_byte(address + 1, hi as u8);
     }
 
+    fn push_word(&mut self, value: u16) {
+        let sp = self.registers.sp.wrapping_sub(2);
+        self.store_word(sp, value);
+        self.registers.sp = sp;
+    }
+
     pub fn pop_word(&mut self) -> u16 {
         let sp = self.registers.sp;
         let word = self.load_word(sp);
@@ -272,7 +278,7 @@ impl Cpu {
             // 0xC4 => CALL NZ,&0000
             0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
-            // 0xC7 => RST &00
+            0xC7 => self.rst(0x00),
             // 0xC8 => RET Z
             0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
@@ -280,7 +286,7 @@ impl Cpu {
             // 0xCC => CALL Z,&0000,
             // 0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
-            // 0xCF => RST &08,
+            0xCF => self.rst(0x08),
             // 0xD0 => RET NC
             0xD1 => self.pop(DE),
             // 0xD2 => JP NC,&0000,
@@ -288,7 +294,7 @@ impl Cpu {
             // 0xD4 => CALL NC,&0000
             0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
-            // 0xD7 => RST &10
+            0xD7 => self.rst(0x10),
             // 0xD8 => RET C
             // 0xD9 => RETI
             // 0xDA => JP C,&0000
@@ -296,7 +302,7 @@ impl Cpu {
             // 0xDC => CALL C,&0000
             0xDD => self.illegal(instr),
             0xDE => self.sbc(ImmediateStorage),
-            // 0xDF => RST &18
+            0xDF => self.rst(0x18),
             // 0xE0 => LD (FF00+n),A
             0xE1 => self.pop(HL),
             // 0xE2 => LD (FF00+C),A
@@ -304,7 +310,7 @@ impl Cpu {
             0xE4 => self.illegal(instr),
             0xE5 => self.push(HL),
             0xE6 => self.and(ImmediateStorage),
-            // 0xE7 => RST &20
+            0xE7 => self.rst(0x20),
             // 0xE8 => ADD SP,dd
             // 0xE9 => JP (HL)
             // 0xEA => LD (nn),A
@@ -312,7 +318,7 @@ impl Cpu {
             0xEC => self.illegal(instr),
             0xED => self.illegal(instr),
             0xEE => self.xor(ImmediateStorage),
-            // 0xEF => RST &28
+            0xEF => self.rst(0x28),
             // Not familiar with z80 yet but I think this is zero page?
             // 0xF0 => LD A,(FF00+n)
             0xF1 => self.pop(AF),
@@ -321,7 +327,7 @@ impl Cpu {
             0xF4 => self.illegal(instr),
             0xF5 => self.push(AF),
             0xF6 => self.or(ImmediateStorage),
-            // 0xF7 => RST &30
+            0xF7 => self.rst(0x30),
             // 0xF8 => LD HL,SP+dd
             // 0xF9 => LD SP,HL
             // 0xFA => LD A,(nn),
@@ -329,6 +335,7 @@ impl Cpu {
             0xFC => self.illegal(instr),
             0xFD => self.illegal(instr),
             0xFE => self.cp(ImmediateStorage),
+            0xFF => self.rst(0x38),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
         }
@@ -350,17 +357,13 @@ impl Cpu {
     }
 
     fn pop(&mut self, register: Register16) {
-        let sp = self.registers.sp;
-        let word = self.load_word(sp);
-        self.registers.sp = sp.wrapping_add(2);
+        let word = self.pop_word();
         self.registers.store_16(register, word);
     }
 
     fn push(&mut self, register: Register16) {
-        let sp = self.registers.sp.wrapping_sub(2);
         let value = self.registers.load_16(register);
-        self.store_word(sp, value);
-        self.registers.sp = sp;
+        self.push_word(value);
     }
 
     fn and<S: Storage>(&mut self, s: S) {
@@ -485,6 +488,12 @@ impl Cpu {
 
     fn cpl(&mut self) {
         self.registers.a = !self.registers.a;
+    }
+
+    fn rst(&mut self, address: u16) {
+        let pc = self.registers.pc;
+        self.push_word(pc);
+        self.registers.pc = address;
     }
 }
 
