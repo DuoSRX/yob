@@ -322,7 +322,7 @@ impl Cpu {
             0xE6 => self.and(ImmediateStorage),
             0xE7 => self.rst(0x20),
             // 0xE8 => ADD SP,dd
-            // 0xE9 => JP (HL)
+            0xE9 => self.jp_hl(),
             // 0xEA => LD (nn),A
             0xEB => self.illegal(instr),
             0xEC => self.illegal(instr),
@@ -506,6 +506,11 @@ impl Cpu {
 
     fn jp(&mut self) {
         let address = self.load_word_and_inc_pc();
+        self.registers.pc = address;
+    }
+
+    fn jp_hl(&mut self) {
+        let address = self.registers.hl();
         self.registers.pc = address;
     }
 
