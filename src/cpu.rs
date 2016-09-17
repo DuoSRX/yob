@@ -90,7 +90,7 @@ impl Cpu {
             0x06 => self.ld(B, ImmediateStorage),
             0x07 => self.rlca(),
             // 0x08 => LD (nn), SP
-            // 0x09 => self.add(HL, BC),
+            0x09 => self.add_hl(BC),
             0x0A => self.ld(A, BC),
             0x0B => self.dec_16(BC),
             0x0C => self.inc(C),
@@ -106,7 +106,7 @@ impl Cpu {
             0x16 => self.ld(D, ImmediateStorage),
             0x17 => self.rla(),
             // 0x18 => JR &4546,
-            // 0x19 => self.add(HL, DE),
+            0x19 => self.add_hl(DE),
             0x1A => self.ld(A, DE),
             0x1B => self.dec(DE),
             0x1C => self.inc(E),
@@ -122,7 +122,7 @@ impl Cpu {
             0x26 => self.ld(H, ImmediateStorage),
             // 0x27 => DAA,
             // 0x28 => JR Z, &4546
-            // 0x29 => self.add(HL, HL),
+            0x29 => self.add_hl(HL),
             // 0x2A => LDI A,(HL)
             0x2B => self.dec_16(HL),
             0x2C => self.inc(L),
@@ -138,7 +138,7 @@ impl Cpu {
             0x36 => self.ld(HL, ImmediateStorage),
             0x37 => self.scf(),
             // 0x38 => JR C,&4546
-            // 0x39 => self.add(HL, SP)
+            0x39 => self.add_hl(SP),
             // 0x3A => LDD A,(HL)
             0x3B => self.dec_16(SP),
             0x3C => self.inc(A),
@@ -284,7 +284,7 @@ impl Cpu {
             // 0xC8 => RET Z
             0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
-            0xCB => { let instr = self.load_byte_and_inc_pc(); self.execute_cb_instruction(instr) },
+            0xCB => self.cb(),
             // 0xCC => CALL Z,&0000,
             // 0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
@@ -347,6 +347,11 @@ impl Cpu {
         match instr {
             _ => panic!("{}: CB Instruction not implemented yet", instr)
         }
+    }
+
+    fn cb(&mut self) {
+        let instruction = self.load_byte_and_inc_pc();
+        self.execute_cb_instruction(instruction);
     }
 
     fn illegal(&self, instruction: u8) {
@@ -435,6 +440,14 @@ impl Cpu {
     fn adc<S: Storage>(&mut self, s: S) {
         let value = s.load(self);
         self.add_op(value, true);
+    }
+
+    // ADD HL, rr
+    fn add_hl(&mut self, register: Register16) {
+        let hl = self.registers.hl();
+        let value = self.registers.load_16(register);
+        let result = value.wrapping_add(hl);
+        self.registers.store_16(Register16::HL, result);
     }
 
     // Generic subtraction for SUB, SBC and CP

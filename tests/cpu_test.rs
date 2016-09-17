@@ -113,6 +113,16 @@ fn add_b() {
 }
 
 #[test]
+fn add_hl_bc() {
+    let mut cpu = reset();
+    cpu.registers.store_16(Register16::HL, 0x10);
+    cpu.registers.store_16(Register16::BC, 0x10);
+    step(&mut cpu, 0x09, 1);
+    assert_eq!(cpu.registers.hl(), 0x20);
+    assert_eq!(cpu.registers.carry(), 0);
+}
+
+#[test]
 fn adc_b() {
     let mut cpu = reset();
     cpu.registers.a = 0x2;
