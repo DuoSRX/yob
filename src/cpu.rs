@@ -263,7 +263,7 @@ impl Cpu {
             0xE7 => self.rst(0x20),
             0xE8 => self.add_sp(),
             0xE9 => self.jp_hl(),
-            // 0xEA => LD (nn),A
+            0xEA => self.ld(Indirect::Immediate, A),
             0xEB => self.illegal(instr),
             0xEC => self.illegal(instr),
             0xED => self.illegal(instr),
@@ -279,7 +279,7 @@ impl Cpu {
             0xF7 => self.rst(0x30),
             // 0xF8 => LD HL,SP+dd
             0xF9 => self.ld_sp_hl(),
-            //0xFA => LD A,(nn),
+            0xFA => self.ld(A, Indirect::Immediate),
             0xFB => self.ei(),
             0xFC => self.illegal(instr),
             0xFD => self.illegal(instr),
