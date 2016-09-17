@@ -285,7 +285,7 @@ impl Cpu {
             // 0xC8 => RET Z
             0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
-            // 0xCB => ????
+            // 0xCB => CB Mode
             // 0xCC=> CALL Z,&0000,
             // 0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
@@ -293,7 +293,7 @@ impl Cpu {
             // 0xD0 => RET NC
             0xD1 => self.pop(DE),
             // 0xD2 => JP NC,&0000,
-            // 0xD3 => illegal
+            0xD3 => self.illegal(instr),
             // 0xD4 => CALL NC,&0000
             0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
@@ -301,25 +301,25 @@ impl Cpu {
             // 0xD8 => RET C
             // 0xD9 => RETI
             // 0xDA => JP C,&0000
-            // 0xDB => illegal
+            0xDB => self.illegal(instr),
             // 0xDC => CALL C,&0000
-            // 0xDD => illegal
+            0xDD => self.illegal(instr),
             0xDE => self.sbc(ImmediateStorage),
             // 0xDF => RST &18
             // 0xE0 => LD (FF00+n),A
             0xE1 => self.pop(HL),
             // 0xE2 => LD (FF00+C),A
-            // 0xE3 => illegal
-            // 0xE4 => illegal
+            0xE3 => self.illegal(instr),
+            0xE4 => self.illegal(instr),
             0xE5 => self.push(HL),
             0xE6 => self.and(ImmediateStorage),
             // 0xE7 => RST &20
             // 0xE8 => ADD SP,dd
             // 0xE9 => JP (HL)
             // 0xEA => LD (nn),A
-            // 0xEB => illegal
-            // 0xEC => illegal
-            // 0xED => illegal
+            0xEB => self.illegal(instr),
+            0xEC => self.illegal(instr),
+            0xED => self.illegal(instr),
             0xEE => self.xor(ImmediateStorage),
             // 0xEF => RST &28
             // Not familiar with z80 yet but I think this is zero page?
@@ -327,7 +327,7 @@ impl Cpu {
             0xF1 => self.pop(AF),
             // 0xF2 => LD A,(FF00+C)
             // 0xF3 => DI
-            // 0xF4 => illegal
+            0xF4 => self.illegal(instr),
             0xF5 => self.push(AF),
             0xF6 => self.or(ImmediateStorage),
             // 0xF7 => RST &30
@@ -335,8 +335,8 @@ impl Cpu {
             // 0xF9 => LD SP,HL
             // 0xFA => LD A,(nn),
             // 0xFB => EI
-            // 0xFC => illegal
-            // 0xFD => illegal
+            0xFC => self.illegal(instr),
+            0xFD => self.illegal(instr),
             0xFE => self.cp(ImmediateStorage),
 
             instr => panic!("{}: Instruction not implemented yet", instr)
@@ -347,6 +347,10 @@ impl Cpu {
         match instr {
             _ => panic!("{}: CB Instruction not implemented yet", instr)
         }
+    }
+
+    fn illegal(&self, instruction: u8) {
+        panic!("Illegal opcode {}", instruction);
     }
 
     fn ld<In: Storage, Out: Storage>(&mut self, a: Out, b: In) {
