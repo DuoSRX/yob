@@ -13,6 +13,7 @@ pub struct Cpu {
     pub registers: Registers,
     pub memory: Memory,
     pub halt: bool,
+    pub interrupt: bool,
 }
 
 impl Cpu {
@@ -21,6 +22,7 @@ impl Cpu {
             registers: Registers::new(),
             memory: Memory::new(),
             halt: false,
+            interrupt: false,
         }
     }
 
@@ -298,7 +300,7 @@ impl Cpu {
             0xD6 => self.sub(ImmediateStorage),
             0xD7 => self.rst(0x10),
             // 0xD8 => RET C
-            // 0xD9 => RETI
+            0xD9 => self.reti(),
             // 0xDA => JP C,&0000
             0xDB => self.illegal(instr),
             // 0xDC => CALL C,&0000
@@ -325,7 +327,7 @@ impl Cpu {
             // 0xF0 => LD A,(FF00+n)
             0xF1 => self.pop(AF),
             // 0xF2 => LD A,(FF00+C)
-            // 0xF3 => DI
+            0xF3 => self.di(),
             0xF4 => self.illegal(instr),
             0xF5 => self.push(AF),
             0xF6 => self.or(ImmediateStorage),
@@ -333,7 +335,7 @@ impl Cpu {
             // 0xF8 => LD HL,SP+dd
             // 0xF9 => LD SP,HL
             // 0xFA => LD A,(nn),
-            // 0xFB => EI
+            0xFB => self.ei(),
             0xFC => self.illegal(instr),
             0xFD => self.illegal(instr),
             0xFE => self.cp(ImmediateStorage),
@@ -498,6 +500,19 @@ impl Cpu {
 
     fn ret(&mut self) {
         self.registers.pc = self.pop_word();
+    }
+
+    fn reti(&mut self) {
+        self.interrupt = false;
+        self.ret();
+    }
+
+    fn ei(&mut self) {
+        self.interrupt = true;
+    }
+
+    fn di(&mut self) {
+        self.interrupt = false;
     }
 
     fn ccf(&mut self) {
