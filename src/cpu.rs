@@ -24,64 +24,6 @@ impl Cpu {
         }
     }
 
-    pub fn load_byte_and_inc_pc(&mut self) -> u8 {
-        let pc = self.registers.pc;
-        self.registers.pc += 1;
-        self.load_byte(pc)
-    }
-
-    pub fn load_byte(&mut self, address: u16) -> u8 {
-        self.memory.load(address)
-    }
-
-    pub fn store_byte(&mut self, address: u16, value: u8) {
-        self.memory.store(address, value);
-    }
-
-    pub fn pop_byte(&mut self) -> u8 {
-        let sp = self.registers.sp;
-        let byte = self.load_byte(sp);
-        self.registers.sp += 1;
-        byte
-    }
-
-    pub fn load_word_and_inc_pc(&mut self) -> u16 {
-        let pc = self.registers.pc;
-        self.registers.pc += 2;
-        self.load_word(pc)
-    }
-
-    pub fn load_word(&mut self, address: u16) -> u16 {
-        let hi = (self.memory.load(address + 1) as u16) << 8;
-        let lo = self.memory.load(address) as u16;
-        hi | lo
-    }
-
-    pub fn store_word(&mut self, address: u16, value: u16) {
-        let lo = value & 0xFF;
-        let hi = (value >> 8) & 0xFF;
-        self.store_byte(address, lo as u8);
-        self.store_byte(address + 1, hi as u8);
-    }
-
-    pub fn push_word(&mut self, value: u16) {
-        let sp = self.registers.sp.wrapping_sub(2);
-        self.store_word(sp, value);
-        self.registers.sp = sp;
-    }
-
-    pub fn pop_word(&mut self) -> u16 {
-        let sp = self.registers.sp;
-        let word = self.load_word(sp);
-        self.registers.sp += 2;
-        word
-    }
-
-    pub fn step(&mut self) {
-        let instr = self.load_byte_and_inc_pc();
-        self.execute_instruction(instr);
-    }
-
     pub fn execute_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
         use registers::Register16::{AF,BC,DE,HL,SP};
@@ -353,6 +295,68 @@ impl Cpu {
             _ => panic!("{}: CB Instruction not implemented yet", instr)
         }
     }
+
+    // Utility functions
+
+    pub fn load_byte_and_inc_pc(&mut self) -> u8 {
+        let pc = self.registers.pc;
+        self.registers.pc += 1;
+        self.load_byte(pc)
+    }
+
+    pub fn load_byte(&mut self, address: u16) -> u8 {
+        self.memory.load(address)
+    }
+
+    pub fn store_byte(&mut self, address: u16, value: u8) {
+        self.memory.store(address, value);
+    }
+
+    pub fn pop_byte(&mut self) -> u8 {
+        let sp = self.registers.sp;
+        let byte = self.load_byte(sp);
+        self.registers.sp += 1;
+        byte
+    }
+
+    pub fn load_word_and_inc_pc(&mut self) -> u16 {
+        let pc = self.registers.pc;
+        self.registers.pc += 2;
+        self.load_word(pc)
+    }
+
+    pub fn load_word(&mut self, address: u16) -> u16 {
+        let hi = (self.memory.load(address + 1) as u16) << 8;
+        let lo = self.memory.load(address) as u16;
+        hi | lo
+    }
+
+    pub fn store_word(&mut self, address: u16, value: u16) {
+        let lo = value & 0xFF;
+        let hi = (value >> 8) & 0xFF;
+        self.store_byte(address, lo as u8);
+        self.store_byte(address + 1, hi as u8);
+    }
+
+    pub fn push_word(&mut self, value: u16) {
+        let sp = self.registers.sp.wrapping_sub(2);
+        self.store_word(sp, value);
+        self.registers.sp = sp;
+    }
+
+    pub fn pop_word(&mut self) -> u16 {
+        let sp = self.registers.sp;
+        let word = self.load_word(sp);
+        self.registers.sp += 2;
+        word
+    }
+
+    pub fn step(&mut self) {
+        let instr = self.load_byte_and_inc_pc();
+        self.execute_instruction(instr);
+    }
+
+    // Instructions implementations
 
     fn cb(&mut self) {
         let instruction = self.load_byte_and_inc_pc();
