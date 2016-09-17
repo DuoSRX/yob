@@ -69,15 +69,6 @@ impl Cpu {
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
-        let prefix: u16 = (instr as u16) >> 8;
-
-        match prefix {
-            0xCB => self.execute_cb_instruction(instr),
-            _    => self.execute_regular_instruction(instr),
-        }
-    }
-
-    fn execute_regular_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
         use registers::Register16::{AF,BC,DE,HL};
 
@@ -285,8 +276,8 @@ impl Cpu {
             // 0xC8 => RET Z
             0xC9 => self.ret(),
             // 0xCA => JP Z,&0000
-            // 0xCB => CB Mode
-            // 0xCC=> CALL Z,&0000,
+            0xCB => { let instr = self.load_byte_and_inc_pc(); self.execute_cb_instruction(instr) },
+            // 0xCC => CALL Z,&0000,
             // 0xCD => CALL &0000,
             0xCE => self.adc(ImmediateStorage),
             // 0xCF => RST &08,
