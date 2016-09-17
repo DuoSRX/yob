@@ -17,7 +17,7 @@ impl Storage for ImmediateStorage {
     }
 }
 
-pub enum Indirect { BC, DE, HL, ZeroPage, ZeroPageRegC }
+pub enum Indirect { BC, DE, HL, ZeroPage, ZeroPageRegC, HLD, HLI }
 impl Storage for Indirect {
     fn load(&self, cpu: &mut Cpu) -> u8 {
         // TODO: Refactor this. I's duplicated in load and store. Put in CPU maybe?
@@ -27,6 +27,16 @@ impl Storage for Indirect {
             Indirect::HL => cpu.registers.hl(),
             Indirect::ZeroPage => 0xFF00 as u16 | cpu.load_byte_and_inc_pc() as u16,
             Indirect::ZeroPageRegC => 0xFF00 as u16 | cpu.registers.c as u16,
+            Indirect::HLI => {
+                let address = cpu.registers.hl();
+                cpu.registers.store_16(Register16::HL, address.wrapping_add(1));
+                address
+            }
+            Indirect::HLD => {
+                let address = cpu.registers.hl();
+                cpu.registers.store_16(Register16::HL, address.wrapping_sub(1));
+                address
+            }
         };
 
         cpu.load_byte(address)
@@ -40,6 +50,16 @@ impl Storage for Indirect {
             Indirect::HL => cpu.registers.hl(),
             Indirect::ZeroPage => 0xFF00 as u16 | cpu.load_byte_and_inc_pc() as u16,
             Indirect::ZeroPageRegC => 0xFF00 as u16 | cpu.registers.c as u16,
+            Indirect::HLI => {
+                let address = cpu.registers.hl();
+                cpu.registers.store_16(Register16::HL, address.wrapping_add(1));
+                address
+            }
+            Indirect::HLD => {
+                let address = cpu.registers.hl();
+                cpu.registers.store_16(Register16::HL, address.wrapping_sub(1));
+                address
+            }
         };
 
         cpu.store_byte(address, value);

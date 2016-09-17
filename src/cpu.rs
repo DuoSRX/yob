@@ -63,7 +63,7 @@ impl Cpu {
             0x1F => self.rra(),
             0x20 => self.jr_cond(!ZERO_FLAG),
             0x21 => self.ld_word_immediate(HL),
-            // 0x22 => LDI (HL),A
+            0x22 => self.ld(Indirect::HLI, A),
             0x23 => self.inc_16(HL),
             0x24 => self.inc(H),
             0x25 => self.dec(H),
@@ -71,7 +71,7 @@ impl Cpu {
             // 0x27 => DAA,
             0x28 => self.jr_cond(ZERO_FLAG),
             0x29 => self.add_hl(HL),
-            // 0x2A => LDI A,(HL)
+            0x2A => self.ld(A, Indirect::HLI),
             0x2B => self.dec_16(HL),
             0x2C => self.inc(L),
             0x2D => self.dec(L),
@@ -79,7 +79,7 @@ impl Cpu {
             0x2F => self.cpl(),
             0x30 => self.jr_cond(!CARRY_FLAG),
             0x31 => self.ld_word_immediate(SP),
-            // 0x32 => LDD A,(HL)
+            0x32 => self.ld(Indirect::HLD, A),
             0x33 => self.inc(SP),
             0x34 => self.inc(HL),
             0x35 => self.dec(HL),
@@ -87,7 +87,7 @@ impl Cpu {
             0x37 => self.scf(),
             0x38 => self.jr_cond(CARRY_FLAG),
             0x39 => self.add_hl(SP),
-            // 0x3A => LDD A,(HL)
+            0x3A => self.ld(A, Indirect::HLD),
             0x3B => self.dec_16(SP),
             0x3C => self.inc(A),
             0x3D => self.dec(A),

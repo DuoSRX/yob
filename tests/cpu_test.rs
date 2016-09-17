@@ -74,6 +74,27 @@ fn ld_bc_immediate() {
 }
 
 #[test]
+fn ld_a_hli() {
+    let mut cpu = reset();
+    cpu.registers.store_16(Register16::HL, 0x1234);
+    cpu.store_byte(0x1234, 0x42);
+    step(&mut cpu, 0x2A, 1);
+    assert_eq!(cpu.registers.a, 0x42);
+    assert_eq!(cpu.registers.hl(), 0x1235);
+}
+
+#[test]
+fn ld_hld_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0x42;
+    cpu.registers.store_16(Register16::HL, 0x1234);
+    step(&mut cpu, 0x32, 1);
+    let byte = cpu.load_byte(0x1234);
+    assert_eq!(byte, 0x42);
+    assert_eq!(cpu.registers.hl(), 0x1233);
+}
+
+#[test]
 fn ld_ba() {
     let mut cpu = reset();
     cpu.registers.a = 0x42;
