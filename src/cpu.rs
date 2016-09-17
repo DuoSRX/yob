@@ -47,6 +47,12 @@ impl Cpu {
         byte
     }
 
+    pub fn load_word_and_inc_pc(&mut self) -> u16 {
+        let pc = self.registers.pc;
+        self.registers.pc += 2;
+        self.load_word(pc)
+    }
+
     pub fn load_word(&mut self, address: u16) -> u16 {
         let hi = (self.memory.load(address + 1) as u16) << 8;
         let lo = self.memory.load(address) as u16;
@@ -498,16 +504,23 @@ impl Cpu {
         storage.store(self, value);
     }
 
-    fn call(&mut self) {
+    fn call_op(&mut self, address: u16) {
         let pc = self.registers.pc;
-        let return_address = self.load_word(pc + 2);
+        let return_address = self.load_word(pc);
         self.push_word(return_address);
-        self.registers.pc = self.load_word(pc);
+        self.registers.pc = address;
+    }
+
+    fn call(&mut self) {
+        let address = self.load_word_and_inc_pc();
+        self.call_op(address);
     }
 
     fn call_cond(&mut self, flag: u8) {
+        let address = self.load_word_and_inc_pc();
+
         if self.registers.test_flag(flag) {
-            self.call();
+            self.call_op(address);
         }
     }
 
