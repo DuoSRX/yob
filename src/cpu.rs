@@ -1,6 +1,4 @@
-use std;
-use std::fmt;
-
+use addressing::*;
 use memory::Memory;
 use registers::*;
 
@@ -90,7 +88,7 @@ impl Cpu {
 
         match instr {
             0x00 => { }, // NOP
-            // 0x01 => LD BC,&0000
+            0x01 => self.ld_word_immediate(BC),
             0x02 => self.ld(BC, A),
             0x03 => self.inc_16(BC),
             0x04 => self.inc(B),
@@ -106,7 +104,7 @@ impl Cpu {
             0x0E => self.ld(C, ImmediateStorage),
             0x0F => self.rrca(),
             0x10 => panic!("Got STOP!"),
-            // 0x11 => LD DE,&0000
+            0x11 => self.ld_word_immediate(DE),
             0x12 => self.ld(DE, A),
             0x13 => self.inc_16(DE),
             0x14 => self.inc(D),
@@ -122,7 +120,7 @@ impl Cpu {
             0x1E => self.ld(E, ImmediateStorage),
             0x1F => self.rra(),
             0x20 => self.jr_cond(!ZERO_FLAG),
-            // 0x21 => LD HL,*0000
+            0x21 => self.ld_word_immediate(HL),
             // 0x22 => LDI (HL),A
             0x23 => self.inc_16(HL),
             0x24 => self.inc(H),
@@ -138,7 +136,7 @@ impl Cpu {
             0x2E => self.ld(L, ImmediateStorage),
             0x2F => self.cpl(),
             0x30 => self.jr_cond(!CARRY_FLAG),
-            // 0x31 => LD SP,&0000
+            0x31 => self.ld_word_immediate(SP),
             // 0x32 => LDD A,(HL)
             0x33 => self.inc(SP),
             0x34 => self.inc(HL),
@@ -373,6 +371,11 @@ impl Cpu {
     fn ld_sp_hl(&mut self) {
         let value = self.registers.hl();
         self.registers.sp = value;
+    }
+
+    fn ld_word_immediate(&mut self, register: Register16) {
+        let value = self.load_word_and_inc_pc();
+        self.registers.store_16(register, value);
     }
 
     fn pop(&mut self, register: Register16) {
