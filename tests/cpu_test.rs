@@ -9,11 +9,11 @@ use yob::registers::*;
 #[cfg(test)]
 fn reset() -> Cpu { Cpu::new() }
 
-fn step(cpu: &mut Cpu, instr: u8, steps: u16) {
+fn step(cpu: &mut Cpu, instr: u8, steps: i32) {
     let pc = cpu.registers.pc;
     cpu.store_byte(pc, instr);
     cpu.step();
-    let steps_taken = cpu.registers.pc - pc;
+    let steps_taken = cpu.registers.pc as i32 - pc as i32;
     assert_eq!(steps_taken, steps);
 }
 
@@ -462,18 +462,20 @@ fn jp() {
 #[test]
 fn jr() {
     let mut cpu = reset();
-    cpu.store_word(0x01, 0x10);
-    step(&mut cpu, 0x18, 0x12);
-    assert_eq!(cpu.registers.pc, 0x12);
+    cpu.registers.pc = 0x4;
+    cpu.store_byte(0x05, -4i8 as u8);
+    step(&mut cpu, 0x18, -2);
+    assert_eq!(cpu.registers.pc, 0x2);
 }
 
 #[test]
 fn jr_cond() {
     let mut cpu = reset();
     cpu.registers.set_zero(false);
-    cpu.store_byte(0x01, 0x05);
-    step(&mut cpu, 0x20, 0x07);
-    assert_eq!(cpu.registers.pc, 0x07);
+    cpu.registers.pc = 0x4;
+    cpu.store_byte(0x05, -4i8 as u8);
+    step(&mut cpu, 0x20, -2);
+    assert_eq!(cpu.registers.pc, 0x02);
 
     let mut cpu = reset();
     cpu.registers.set_zero(true);

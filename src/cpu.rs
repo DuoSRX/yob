@@ -585,21 +585,21 @@ impl Cpu {
     }
 
     fn jr(&mut self) {
-        let address = self.load_byte_and_inc_pc() as i8;
-        self.registers.pc = (self.registers.pc as i16 + address as i16) as u16;
+        let offset = self.load_byte_and_inc_pc() as i8;
+        self.registers.pc = (self.registers.pc as i16 + offset as i16) as u16;
     }
 
     fn jr_if(&mut self, flag: u8) {
-        let address = self.load_byte_and_inc_pc() as i8;
+        let offset = self.load_byte_and_inc_pc() as i8;
         if self.registers.test_flag(flag) {
-            self.registers.pc = (self.registers.pc as i16 + address as i16) as u16;
+            self.registers.pc = (self.registers.pc as i16 + offset as i16) as u16;
         }
     }
 
     fn jr_unless(&mut self, flag: u8) {
-        let address = self.load_byte_and_inc_pc() as i8;
+        let offset = self.load_byte_and_inc_pc() as i8;
         if !self.registers.test_flag(flag) {
-            self.registers.pc = (self.registers.pc as i16 + address as i16) as u16;
+            self.registers.pc = (self.registers.pc as i16 + offset as i16) as u16;
         }
     }
 
