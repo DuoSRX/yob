@@ -12,6 +12,7 @@ pub struct Gpu {
     pub window_y: u8,
 
     pub oam: [u8; 0xA0],
+    pub vram: [u8; 0x2000],
     // TODO: DMACONT
 }
 
@@ -42,7 +43,14 @@ impl Gpu {
             window_x: 0,
             window_y: 0,
             oam: [0; 0xA0],
+            vram: [0; 0x2000],
         }
+    }
+
+    // pub fn vram_load(&mut self, address: u16) -> u8
+
+    pub fn vram_store(&mut self, address: u16, value: u8) {
+        self.vram[address as usize] = value;
     }
 
     pub fn load(&mut self, address: u8) -> u8 {

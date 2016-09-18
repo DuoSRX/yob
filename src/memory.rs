@@ -28,33 +28,33 @@ impl Memory {
     }
 
     pub fn load(&mut self, address: u16) -> u8 {
-        if address < 0x3FFF {
-            self.rom[address as usize & 0x3FFF]
-        } else if address <= 0xDFFF {
-            self.work_ram[address as usize & 0xDFFF]
-        } else if address < 0xFF80 {
-            self.read_io(address)
-        } else if address < 0xFFFF {
-            self.high_ram[address as usize & 0x7F]
-        } else {
-            //panic!("Can't read memory at {:04x}", address);
-            self.interrupt_flags
+        match address {
+            0x0000...0x3FFF => self.rom[address as usize],
+            0xC000...0xCFFF => self.work_ram[address as usize - 0xC000],
+            0xD000...0xDFFF => self.work_ram[address as usize - 0xD000],
+            0xE000...0xFDFF => self.rom[address as usize - 0xE000],
+            0xFF00...0xFF80 => self.read_io(address),
+            0xFF80...0xFFFE => self.high_ram[address as usize & 0x7F],
+            0xFFFF => self.interrupt_flags,
+            _ => panic!("Can't read memory at {:04x}", address),
         }
     }
 
     pub fn store(&mut self, address: u16, value: u8) {
-        if address < 0x3FFF {
-            self.rom[address as usize & 0x3FFF] = value;
-        } else if address <= 0xDFFF {
-            self.work_ram[address as usize & 0x0FFF] = value;
-        } else if address < 0xFF80 {
-            self.write_io(address, value);
-        } else if address < 0xFFFF {
-            self.high_ram[address as usize & 0x7F] = value;
-        } else {
-            self.interrupt_flags = value;
-            //panic!("Can't store {:02x} at {:04x}", value, address);
+        match address {
+            0x0000...0x3FFF => { self.rom[address as usize] = value }
+            0x8000...0x9FFF => { self.gpu.vram_store(address - 0x8000, value) },
+            0xC000...0xCFFF => { self.work_ram[address as usize - 0xC000] = value },
+            0xD000...0xDFFF => { self.work_ram[address as usize - 0xD000] = value },
+            0xFE00...0xFE9F => { self.gpu.oam[address as usize - 0xFE00] = value },
+            0xFEA0...0xFEFF => { } // Unusable... weird
+            0xFF00...0xFF80 => { self.write_io(address, value) },
+            0xFF80...0xFFFE => { self.high_ram[address as usize & 0x7F] = value },
+            0xFFFF => { self.interrupt_flags = value },
+            _ => panic!("Can't write memory at {:04x}", address),
         }
+        // } else if address < 0xFF00 {
+        //     // The wiki says it's unusable... okay?
     }
 
     pub fn read_io(&mut self, address: u16) -> u8 {
@@ -65,7 +65,8 @@ impl Memory {
             // 0x05...0x8 => {} // Timer
             0x0F => self.interrupt_flags, // Interrupt flags
             // 0x10...0x27 => {} // Sound
-            0x40...0x47 => self.gpu.load((address as u8) & 0xFF),
+            0x40...0x4C => self.gpu.load((address as u8) & 0xFF),
+            0x4C...0xFF => { 0 },
             _    => { panic!("Can't write to unknown IO register {:04X}", address) }
         }
     }
@@ -78,9 +79,10 @@ impl Memory {
             // 0x04 => {} // Divider (???)
             // 0x05...0x8 => {} // Timer
             0x0F => { self.interrupt_flags = value } // Interrupt flags
-            // 0x10...0x27 => {} // Sound
-            0x40...0x47 => self.gpu.store((address as u8) & 0xFF, value),
-            _    => { panic!("Can't write to unknown IO register {:04X}", address) }
+            0x10...0x27 => {} // TODO: Sound
+            0x40...0x4C => self.gpu.store((address as u8) & 0xFF, value),
+            0x4C...0xFF => {},
+            _ => { panic!("Can't write to unknown IO register {:04X}", address) }
         }
     }
 }
