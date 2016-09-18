@@ -124,8 +124,8 @@ impl Registers {
 impl fmt::Debug for Registers {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "A:{:02x} B:{:02x} C:{:02x} D:{:02x} E:{:02x} \
-             H:{:02x} L:{:02x} F:{:04b} \
+            "A:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} \
+             H:{:02X} L:{:02X} F:{:04b} \
              PC:{:04x} SP:{:04x}",
             self.a, self.b, self.c, self.d, self.e,
             self.h, self.l, self.f >> 4,

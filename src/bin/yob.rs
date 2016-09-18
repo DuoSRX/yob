@@ -12,7 +12,8 @@ fn main() {
     let mut cpu = Cpu::new();
     cpu.reset();
 
-    for _ in 1..100 {
+    // for _ in 1..20 {
+    loop {
         cpu.step();
     }
 

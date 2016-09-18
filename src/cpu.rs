@@ -31,9 +31,11 @@ impl Cpu {
     }
 
     pub fn step(&mut self) {
+        let pc = self.registers.pc;
+        let b = self.load_byte(pc);
+        print!("{:04x} {:02x}  ", pc, b);
         println!("{:?}", self);
         let instruction = self.load_byte_and_inc_pc();
-        println!("Executing {:02x}", instruction);
         println!("");
         self.execute_instruction(instruction);
     }
@@ -583,21 +585,21 @@ impl Cpu {
     }
 
     fn jr(&mut self) {
-        let address = self.load_byte_and_inc_pc();
-        self.registers.pc += address as u16;
+        let address = self.load_byte_and_inc_pc() as i8;
+        self.registers.pc = (self.registers.pc as i16 + address as i16) as u16;
     }
 
     fn jr_if(&mut self, flag: u8) {
-        let address = self.load_byte_and_inc_pc();
+        let address = self.load_byte_and_inc_pc() as i8;
         if self.registers.test_flag(flag) {
-            self.registers.pc += address as u16;
+            self.registers.pc = (self.registers.pc as i16 + address as i16) as u16;
         }
     }
 
     fn jr_unless(&mut self, flag: u8) {
-        let address = self.load_byte_and_inc_pc();
+        let address = self.load_byte_and_inc_pc() as i8;
         if !self.registers.test_flag(flag) {
-            self.registers.pc += address as u16;
+            self.registers.pc = (self.registers.pc as i16 + address as i16) as u16;
         }
     }
 
