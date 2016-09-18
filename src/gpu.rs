@@ -10,6 +10,8 @@ pub struct Gpu {
     pub sprite_palette_1: u8,
     pub window_x: u8,
     pub window_y: u8,
+
+    pub oam: [u8; 0xA0],
     // TODO: DMACONT
 }
 
@@ -32,13 +34,14 @@ impl Gpu {
             lcd_status: 0,
             scroll_x: 0,
             scroll_y: 0,
-            ly: 0,
+            ly: 148,
             lyc: 0,
             bg_palette: 0,
             sprite_palette_0: 0,
             sprite_palette_1: 0,
             window_x: 0,
             window_y: 0,
+            oam: [0; 0xA0],
         }
     }
 
@@ -50,12 +53,12 @@ impl Gpu {
             0x43 => self.scroll_y,
             0x44 => self.ly,
             // 0x45 => {} // CMPLINE - Scanline comparison
-            // 0x47 => {} // BGRDPAL - Background palette
+            0x47 => self.bg_palette,
+            // 0x46 => {} // DMACONT - DMA Transfer Controller
             // 0x48 => {} // OBJ0PAL - Sprite palette #0
             // 0x49 => {} // OBJ1PAL - Sprite palette #1
             // 0x4A => {} // WNDPOSY - Window Y position
             // 0x4B => {} // WNDPOSX - Window X position
-            // 0x46 => {} // DMACONT - DMA Transfer Controller
             _ => panic!("Can't load from GPU yet (0x{:02X})", address)
         }
         // panic!("Can't load from GPU yet ({:02X})", address);
@@ -69,12 +72,12 @@ impl Gpu {
             0x43 => { self.scroll_y = value },
             0x44 => { self.ly = 0 },
             // 0x45 => {} // CMPLINE - Scanline comparison
-            // 0x47 => {} // BGRDPAL - Background palette
-            // 0x48 => {} // OBJ0PAL - Sprite palette #0
-            // 0x49 => {} // OBJ1PAL - Sprite palette #1
+            // 0x46 => {} // DMACONT - DMA Transfer Controller
+            0x47 => { self.bg_palette = value },
+            0x48 => { self.sprite_palette_0 = value },
+            0x49 => { self.sprite_palette_1 = value },
             // 0x4A => {} // WNDPOSY - Window Y position
             // 0x4B => {} // WNDPOSX - Window X position
-            // 0x46 => {} // DMACONT - DMA Transfer Controller
             _ => panic!("Can't store in GPU yet (0x{:02X})", address)
         }
     }
