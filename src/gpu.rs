@@ -3,8 +3,8 @@ pub struct Gpu {
     pub lcd_status: u8,
     pub scroll_x: u8,
     pub scroll_y: u8,
-    pub scanline: u8,
-    pub cmpline: u8,
+    pub ly: u8,
+    pub lyc: u8,
     pub bg_palette: u8,
     pub sprite_palette_0: u8,
     pub sprite_palette_1: u8,
@@ -32,8 +32,8 @@ impl Gpu {
             lcd_status: 0,
             scroll_x: 0,
             scroll_y: 0,
-            scanline: 0,
-            cmpline: 0,
+            ly: 0,
+            lyc: 0,
             bg_palette: 0,
             sprite_palette_0: 0,
             sprite_palette_1: 0,
@@ -48,7 +48,7 @@ impl Gpu {
             0x41 => self.lcd_status,
             0x42 => self.scroll_x,
             0x43 => self.scroll_y,
-            0x44 => self.scanline,
+            0x44 => self.ly,
             // 0x45 => {} // CMPLINE - Scanline comparison
             // 0x47 => {} // BGRDPAL - Background palette
             // 0x48 => {} // OBJ0PAL - Sprite palette #0
@@ -67,7 +67,7 @@ impl Gpu {
             0x41 => { self.lcd_status = value }, // FIXME some bits are read only
             0x42 => { self.scroll_x = value },
             0x43 => { self.scroll_y = value },
-            0x44 => { self.scanline = 0 },
+            0x44 => { self.ly = 0 },
             // 0x45 => {} // CMPLINE - Scanline comparison
             // 0x47 => {} // BGRDPAL - Background palette
             // 0x48 => {} // OBJ0PAL - Sprite palette #0
