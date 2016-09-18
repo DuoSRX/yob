@@ -542,9 +542,9 @@ impl Cpu {
         storage.store(self, value);
     }
 
-    fn inc_16<S: Storage>(&mut self, storage: S) {
-        let value = storage.load(self).wrapping_add(1);
-        storage.store(self, value);
+    fn inc_16(&mut self, register: Register16) {
+        let value = self.registers.load_16(register.clone()).wrapping_add(1);
+        self.registers.store_16(register, value);
     }
 
     fn dec<S: Storage>(&mut self, storage: S) {
@@ -555,9 +555,9 @@ impl Cpu {
         storage.store(self, value);
     }
 
-    fn dec_16<S: Storage>(&mut self, storage: S) {
-        let value = storage.load(self).wrapping_sub(1);
-        storage.store(self, value);
+    fn dec_16(&mut self, register: Register16) {
+        let value = self.registers.load_16(register.clone()).wrapping_sub(1);
+        self.registers.store_16(register, value);
     }
 
     fn jp(&mut self) {
