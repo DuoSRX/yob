@@ -2,11 +2,10 @@ use addressing::*;
 use memory::Memory;
 use registers::*;
 
-// TODO: Flag management (haven't implemented N H Z)
+// TODO: Better flag management (haven't implemented N and H)
 // TODO: Interrupts
-// TODO: Branching instructions
-// TODO: More 16 bits operations
 // TODO: CB Instructions
+// FIXME: Refactor JP/JR/CALL/RET conditionals. There's lot of duplication.
 pub struct Cpu {
     pub registers: Registers,
     pub memory: Memory,
@@ -22,6 +21,21 @@ impl Cpu {
             halt: false,
             interrupt: false,
         }
+    }
+
+    pub fn reset(&mut self) {
+        // TODO: Set default memory values
+        // See http://gbdev.gg8.se/wiki/articles/Power_Up_Sequence
+        self.registers.reset();
+        self.registers.pc = 0x100;
+    }
+
+    pub fn step(&mut self) {
+        println!("{:?}", self);
+        let instruction = self.load_byte_and_inc_pc();
+        println!("Executing {:02x}", instruction);
+        println!("");
+        self.execute_instruction(instruction);
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
@@ -61,7 +75,7 @@ impl Cpu {
             0x1D => self.dec(E),
             0x1E => self.ld(E, ImmediateStorage),
             0x1F => self.rra(),
-            0x20 => self.jr_cond(!ZERO_FLAG),
+            0x20 => self.jr_unless(ZERO_FLAG),
             0x21 => self.ld_word_immediate(HL),
             0x22 => self.ld(Indirect::HLI, A),
             0x23 => self.inc_16(HL),
@@ -69,7 +83,7 @@ impl Cpu {
             0x25 => self.dec(H),
             0x26 => self.ld(H, ImmediateStorage),
             0x27 => self.daa(),
-            0x28 => self.jr_cond(ZERO_FLAG),
+            0x28 => self.jr_if(ZERO_FLAG),
             0x29 => self.add_hl(HL),
             0x2A => self.ld(A, Indirect::HLI),
             0x2B => self.dec_16(HL),
@@ -77,7 +91,7 @@ impl Cpu {
             0x2D => self.dec(L),
             0x2E => self.ld(L, ImmediateStorage),
             0x2F => self.cpl(),
-            0x30 => self.jr_cond(!CARRY_FLAG),
+            0x30 => self.jr_unless(CARRY_FLAG),
             0x31 => self.ld_word_immediate(SP),
             0x32 => self.ld(Indirect::HLD, A),
             0x33 => self.inc(SP),
@@ -85,7 +99,7 @@ impl Cpu {
             0x35 => self.dec(HL),
             0x36 => self.ld(HL, ImmediateStorage),
             0x37 => self.scf(),
-            0x38 => self.jr_cond(CARRY_FLAG),
+            0x38 => self.jr_if(CARRY_FLAG),
             0x39 => self.add_hl(SP),
             0x3A => self.ld(A, Indirect::HLD),
             0x3B => self.dec_16(SP),
@@ -221,35 +235,35 @@ impl Cpu {
             0xBD => self.cp(L),
             0xBE => self.cp(HL),
             0xBF => self.cp(A),
-            0xC0 => self.ret_cond(!ZERO_FLAG),
+            0xC0 => self.ret_unless(ZERO_FLAG),
             0xC1 => self.pop(BC),
-            0xC2 => self.jp_cond(!ZERO_FLAG),
+            0xC2 => self.jp_unless(ZERO_FLAG),
             0xC3 => self.jp(),
-            0xC4 => self.call_cond(!ZERO_FLAG),
+            0xC4 => self.call_unless(ZERO_FLAG),
             0xC5 => self.push(BC),
             0xC6 => self.add(ImmediateStorage),
             0xC7 => self.rst(0x00),
-            0xC8 => self.ret_cond(ZERO_FLAG),
+            0xC8 => self.ret_if(ZERO_FLAG),
             0xC9 => self.ret(),
-            0xCA => self.jp_cond(ZERO_FLAG),
+            0xCA => self.jp_if(ZERO_FLAG),
             0xCB => self.cb(),
-            0xCC => self.call_cond(ZERO_FLAG),
+            0xCC => self.call_if(ZERO_FLAG),
             0xCD => self.call(),
             0xCE => self.adc(ImmediateStorage),
             0xCF => self.rst(0x08),
-            0xD0 => self.ret_cond(!CARRY_FLAG),
+            0xD0 => self.ret_unless(CARRY_FLAG),
             0xD1 => self.pop(DE),
-            0xD2 => self.jp_cond(!CARRY_FLAG),
+            0xD2 => self.jp_unless(CARRY_FLAG),
             0xD3 => self.illegal(instr),
-            0xD4 => self.call_cond(!CARRY_FLAG),
+            0xD4 => self.call_unless(CARRY_FLAG),
             0xD5 => self.push(DE),
             0xD6 => self.sub(ImmediateStorage),
             0xD7 => self.rst(0x10),
-            0xD8 => self.ret_cond(CARRY_FLAG),
+            0xD8 => self.ret_if(CARRY_FLAG),
             0xD9 => self.reti(),
-            0xDA => self.jp_cond(CARRY_FLAG),
+            0xDA => self.jp_if(CARRY_FLAG),
             0xDB => self.illegal(instr),
-            0xDC => self.call_cond(CARRY_FLAG),
+            0xDC => self.call_if(CARRY_FLAG),
             0xDD => self.illegal(instr),
             0xDE => self.sbc(ImmediateStorage),
             0xDF => self.rst(0x18),
@@ -351,11 +365,6 @@ impl Cpu {
         word
     }
 
-    pub fn step(&mut self) {
-        let instr = self.load_byte_and_inc_pc();
-        self.execute_instruction(instr);
-    }
-
     // Instructions implementations
 
     fn cb(&mut self) {
@@ -381,7 +390,7 @@ impl Cpu {
     fn ld_hl_sp(&mut self) {
         // TODO: Handle flags
         // FIXME: Signed arithmetics?
-        let offset = self.load_word_and_inc_pc();
+        let offset = self.load_byte_and_inc_pc() as u16;
         let sp = self.registers.sp;
         let address = offset.wrapping_add(sp);
         self.registers.store_16(Register16::HL, address);
@@ -411,18 +420,21 @@ impl Cpu {
     fn and<S: Storage>(&mut self, s: S) {
         let value = self.registers.a & s.load(self);
         self.registers.a = value;
+        self.registers.f = 0;
         self.registers.set_zero(value == 0);
     }
 
     fn or<S: Storage>(&mut self, s: S) {
         let value = self.registers.a | s.load(self);
         self.registers.a = value;
+        self.registers.f = 0;
         self.registers.set_zero(value == 0);
     }
 
     fn xor<S: Storage>(&mut self, s: S) {
         let value = self.registers.a ^ s.load(self);
         self.registers.a = value;
+        self.registers.f = 0;
         self.registers.set_zero(value == 0);
     }
 
@@ -522,7 +534,9 @@ impl Cpu {
 
     fn inc<S: Storage>(&mut self, storage: S) {
         let value = storage.load(self).wrapping_add(1);
+        let carry = self.registers.test_flag(CARRY_FLAG);
         self.registers.set_zero(value == 0);
+        self.registers.set_carry(carry);
         storage.store(self, value);
     }
 
@@ -533,7 +547,9 @@ impl Cpu {
 
     fn dec<S: Storage>(&mut self, storage: S) {
         let value = storage.load(self).wrapping_sub(1);
+        let carry = self.registers.test_flag(CARRY_FLAG);
         self.registers.set_zero(value == 0);
+        self.registers.set_carry(carry);
         storage.store(self, value);
     }
 
@@ -552,10 +568,16 @@ impl Cpu {
         self.registers.pc = address;
     }
 
-    fn jp_cond(&mut self, flag: u8) {
+    fn jp_if(&mut self, flag: u8) {
         let address = self.load_word_and_inc_pc();
-
         if self.registers.test_flag(flag) {
+            self.registers.pc = address;
+        }
+    }
+
+    fn jp_unless(&mut self, flag: u8) {
+        let address = self.load_word_and_inc_pc();
+        if !self.registers.test_flag(flag) {
             self.registers.pc = address;
         }
     }
@@ -565,10 +587,16 @@ impl Cpu {
         self.registers.pc += address as u16;
     }
 
-    fn jr_cond(&mut self, flag: u8) {
+    fn jr_if(&mut self, flag: u8) {
         let address = self.load_byte_and_inc_pc();
-
         if self.registers.test_flag(flag) {
+            self.registers.pc += address as u16;
+        }
+    }
+
+    fn jr_unless(&mut self, flag: u8) {
+        let address = self.load_byte_and_inc_pc();
+        if !self.registers.test_flag(flag) {
             self.registers.pc += address as u16;
         }
     }
@@ -584,10 +612,16 @@ impl Cpu {
         self.call_op(address);
     }
 
-    fn call_cond(&mut self, flag: u8) {
+    fn call_if(&mut self, flag: u8) {
         let address = self.load_word_and_inc_pc();
-
         if self.registers.test_flag(flag) {
+            self.call_op(address);
+        }
+    }
+
+    fn call_unless(&mut self, flag: u8) {
+        let address = self.load_word_and_inc_pc();
+        if !self.registers.test_flag(flag) {
             self.call_op(address);
         }
     }
@@ -596,8 +630,14 @@ impl Cpu {
         self.registers.pc = self.pop_word();
     }
 
-    fn ret_cond(&mut self, flag: u8) {
+    fn ret_if(&mut self, flag: u8) {
         if self.registers.test_flag(flag) {
+            self.ret();
+        }
+    }
+
+    fn ret_unless(&mut self, flag: u8) {
+        if !self.registers.test_flag(flag) {
             self.ret();
         }
     }

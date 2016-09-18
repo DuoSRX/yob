@@ -44,6 +44,18 @@ impl Registers {
         }
     }
 
+    pub fn reset(&mut self) {
+        // http://gbdev.gg8.se/wiki/articles/Power_Up_Sequence
+        self.a = 0x01;
+        self.f = 0xB0;
+        self.b = 0x00;
+        self.c = 0x13;
+        self.d = 0x00;
+        self.e = 0xD8;
+        self.h = 0x01;
+        self.l = 0x4D;
+    }
+
     fn set_flag_if(&mut self, flag: u8, condition: bool) {
         if condition {
             self.f |= flag;
@@ -96,8 +108,8 @@ impl Registers {
     }
 
     pub fn store_16(&mut self, register: Register16, value: u16) {
-        let lo = (value & 0xFF) as u8;
-        let hi = ((value >> 8) & 0xFF) as u8;
+        let hi = (value >> 8) as u8;
+        let lo = value as u8;
 
         match register {
             Register16::AF => { self.a = hi; self.f = lo },
@@ -116,7 +128,7 @@ impl fmt::Debug for Registers {
              H:{:02x} L:{:02x} F:{:04b} \
              PC:{:04x} SP:{:04x}",
             self.a, self.b, self.c, self.d, self.e,
-            self.h, self.l, self.f,
+            self.h, self.l, self.f >> 4,
             self.pc, self.sp
         ))
     }
