@@ -533,20 +533,11 @@ fn call_z() {
     assert_eq!(cpu.registers.pc, 0x3);
 
     let mut cpu = reset();
-    cpu.store_word(0x1, 0x10);
-    cpu.store_word(0x3, 0x5);
+    cpu.store_word(0x1, 0x1234);
     cpu.registers.set_zero(true);
-    step(&mut cpu, 0xCC, 0x10);
-    assert_eq!(cpu.registers.pc, 0x10);
-    assert_eq!(cpu.pop_word(), 0x5);
-}
-
-#[test]
-fn memory() {
-    let mut cpu = reset();
-    cpu.registers.store_16(Register16::BC, 0x1234);
-    step(&mut cpu, 0xC5, 1);
-    assert_eq!(cpu.registers.sp, 0xFFFC);
+    step(&mut cpu, 0xCC, 0x1234);
+    assert_eq!(cpu.registers.pc, 0x1234);
+    assert_eq!(cpu.pop_word(), 0x3);
 }
 
 #[test]
