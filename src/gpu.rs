@@ -31,15 +31,15 @@ pub struct Gpu {
 impl Gpu {
     pub fn new() -> Gpu {
         Gpu {
-            lcd_control: 0,
+            lcd_control: 0x91,
             lcd_status: 0,
             scroll_x: 0,
             scroll_y: 0,
             ly: 148,
             lyc: 0,
-            bg_palette: 0,
-            sprite_palette_0: 0,
-            sprite_palette_1: 0,
+            bg_palette: 0xFC,
+            sprite_palette_0: 0xFF,
+            sprite_palette_1: 0xFF,
             window_x: 0,
             window_y: 0,
             oam: [0; 0xA0],

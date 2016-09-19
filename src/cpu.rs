@@ -31,12 +31,12 @@ impl Cpu {
     }
 
     pub fn step(&mut self) {
-        let pc = self.registers.pc;
-        let b = self.load_byte(pc);
-        print!("{:04x} {:02x}  ", pc, b);
-        println!("{:?}", self);
+        // let pc = self.registers.pc;
+        // let b = self.load_byte(pc);
+        // print!("{:04x} {:02x}  ", pc, b);
+        // println!("{:?}", self);
         let instruction = self.load_byte_and_inc_pc();
-        println!("");
+        // println!("");
         self.execute_instruction(instruction);
     }
 
