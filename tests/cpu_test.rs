@@ -548,3 +548,47 @@ fn memory() {
     step(&mut cpu, 0xC5, 1);
     assert_eq!(cpu.registers.sp, 0xFFFC);
 }
+
+#[test]
+fn swap_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b1101_0000;
+    cpu.store_byte(0x1, 0x37);
+    step(&mut cpu, 0xCB, 1);
+    assert_eq!(cpu.registers.a, 0b0000_1101);
+}
+
+#[test]
+fn res_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b0001_0001;
+    cpu.store_byte(0x1, 0x87);
+    step(&mut cpu, 0xCB, 1);
+    assert_eq!(cpu.registers.a, 0b0001_0000);
+}
+
+#[test]
+fn set_a() {
+    let mut cpu = reset();
+    cpu.registers.a = 0b0001_0000;
+    cpu.store_byte(0x1, 0xC7);
+    step(&mut cpu, 0xCB, 1);
+    assert_eq!(cpu.registers.a, 0b0001_0001);
+}
+
+#[test]
+fn bit_a() {
+    let mut cpu = reset();
+    cpu.registers.set_zero(false);
+    cpu.registers.a = 0b0000_0000;
+    cpu.store_byte(0x1, 0x47);
+    step(&mut cpu, 0xCB, 1);
+    assert!(cpu.registers.test_flag(ZERO_FLAG));
+
+    let mut cpu = reset();
+    cpu.registers.set_zero(false);
+    cpu.registers.a = 0b0000_0001;
+    cpu.store_byte(0x1, 0x47);
+    step(&mut cpu, 0xCB, 1);
+    assert!(!cpu.registers.test_flag(ZERO_FLAG));
+}

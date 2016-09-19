@@ -309,8 +309,38 @@ impl Cpu {
     }
 
     pub fn execute_cb_instruction(&mut self, instr: u8) {
+        use registers::Register8::{A,B,C,D,E,H,L};
+        use registers::Register16::{AF,BC,DE,HL,SP};
+
         match instr {
-            _ => panic!("{}: CB Instruction not implemented yet", instr)
+            0x30 => self.swap(B),
+            0x31 => self.swap(C),
+            0x32 => self.swap(D),
+            0x33 => self.swap(E),
+            0x34 => self.swap(H),
+            0x35 => self.swap(L),
+            // 0x36 => self.swap(HL), TODO
+            0x37 => self.swap(A),
+            0x47 => self.bit(0, A),
+            // 0x80 => self.res(0, B),
+            // 0x81 => self.res(0, C),
+            // 0x82 => self.res(0, D),
+            // 0x83 => self.res(0, E),
+            // 0x84 => self.res(0, H),
+            // 0x85 => self.res(0, L),
+            // 0x86 => self.res(0, Indirect::HL),
+            0x87 => self.res(0, A),
+            // 0x88 => self.res(1, B),
+            // 0x89 => self.res(1, C),
+            // 0x8A => self.res(1, D),
+            // 0x8B => self.res(1, E),
+            // 0x8C => self.res(1, H),
+            // 0x8D => self.res(1, L),
+            // 0x8E => self.res(1, Indirect::HL),
+            // 0x8F => self.res(1, A),
+            0xC7 => self.set(0, A),
+
+            _ => panic!("{:02x}: CB Instruction not implemented yet", instr)
         }
     }
 
@@ -693,5 +723,30 @@ impl Cpu {
     fn daa(&mut self) {
         println!("{:?}", self);
         panic!("DAA not implemented yet");
+    }
+
+    // CB Instructions
+
+    fn swap<S: Storage>(&mut self, register: S) {
+        let original = register.load(self);
+        let value = (original >> 4) | (original << 4);
+        self.registers.f = 0;
+        self.registers.set_zero(value == 0);
+        register.store(self, value);
+    }
+
+    fn bit<S: Storage>(&mut self, bit: u8, register: S) {
+        let value = register.load(self) & (1 << bit);
+        self.registers.set_zero(value == 0);
+    }
+
+    fn res<S: Storage>(&mut self, bit: u8, register: S) {
+        let value = register.load(self);
+        register.store(self, value & !(1 << bit));
+    }
+
+    fn set<S: Storage>(&mut self, bit: u8, register: S) {
+        let value = register.load(self);
+        register.store(self, value | (1 << bit));
     }
 }

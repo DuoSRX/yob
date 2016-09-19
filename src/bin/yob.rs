@@ -1,13 +1,11 @@
 extern crate yob;
 extern crate sdl2;
 
-use std::fs::File;
-
-use sdl2::pixels::PixelFormatEnum;
+// use sdl2::pixels::PixelFormatEnum;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
-use yob::cartridge::Cartridge;
+// use yob::cartridge::Cartridge;
 use yob::cpu::Cpu;
 
 fn main() {
