@@ -31,10 +31,12 @@ impl Cpu {
     }
 
     pub fn step(&mut self) {
-        // let pc = self.registers.pc;
-        // let b = self.load_byte(pc);
-        // print!("{:04x} {:02x}  ", pc, b);
-        // println!("{:?}", self);
+        let pc = self.registers.pc;
+        let sp = self.registers.sp;
+        let b = self.load_byte(pc);
+        print!("{:04x} {:02x}  ", pc, b);
+        print!("{:?}", self);
+        println!(" Stack:{:04x}", self.load_word(sp));
         let instruction = self.load_byte_and_inc_pc();
         // println!("");
         self.execute_instruction(instruction);
@@ -356,6 +358,9 @@ impl Cpu {
 
     pub fn push_word(&mut self, value: u16) {
         let sp = self.registers.sp.wrapping_sub(2);
+        if value == 0xF0C9 {
+            panic!("{:?}", self);
+        }
         self.store_word(sp, value);
         self.registers.sp = sp;
     }
@@ -544,6 +549,9 @@ impl Cpu {
 
     fn inc_16(&mut self, register: Register16) {
         let value = self.registers.load_16(register.clone()).wrapping_add(1);
+        let carry = self.registers.test_flag(CARRY_FLAG);
+        self.registers.set_zero(value == 0);
+        self.registers.set_carry(carry);
         self.registers.store_16(register, value);
     }
 
@@ -557,6 +565,9 @@ impl Cpu {
 
     fn dec_16(&mut self, register: Register16) {
         let value = self.registers.load_16(register.clone()).wrapping_sub(1);
+        let carry = self.registers.test_flag(CARRY_FLAG);
+        self.registers.set_zero(value == 0);
+        self.registers.set_carry(carry);
         self.registers.store_16(register, value);
     }
 
@@ -604,7 +615,8 @@ impl Cpu {
     }
 
     fn call_op(&mut self, address: u16) {
-        let return_address = self.load_word_and_inc_pc();
+        //let return_address = self.load_word_and_inc_pc();
+        let return_address = self.registers.pc;
         self.push_word(return_address);
         self.registers.pc = address;
     }

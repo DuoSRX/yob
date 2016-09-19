@@ -72,10 +72,18 @@ fn inc_bc() {
 fn dec_bc() {
     let mut cpu = reset();
     cpu.registers.b = 0;
-    cpu.registers.b = 0;
+    cpu.registers.c = 0;
     step(&mut cpu, 0x0B, 1);
     assert_eq!(cpu.registers.b, 0xFF);
     assert_eq!(cpu.registers.c, 0xFF);
+    assert!(!cpu.registers.test_flag(ZERO_FLAG));
+
+    let mut cpu = reset();
+    cpu.registers.b = 0;
+    cpu.registers.c = 1;
+    step(&mut cpu, 0x0B, 1);
+    assert_eq!(cpu.registers.hl(), 0);
+    assert!(cpu.registers.test_flag(ZERO_FLAG));
 }
 
 #[test]

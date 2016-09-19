@@ -38,14 +38,37 @@ fn main() {
     'running: loop {
         cpu.step();
         cycles += 1;
-        if cycles >= 500000 {
-            println!("{:04x} {:02x}", cpu.registers.pc, cpu.memory.gpu.oam[0]);
-            break 'running;
-        }
+        // if cycles >= 10000 {
+        //     break 'running;
+        // }
+            // println!("{:04x} {:02x}", cpu.registers.pc, cpu.memory.gpu.vram[0]);
+            // for i in 0x8000..0x8011 {
+            //     println!("{:02x}", cpu.load_byte(i));
+            // }
+        //     break 'running;
+        // }
+
 
         while let Some(event) = event_pump.poll_event() {
             match event {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    println!("{:?}", cpu);
+                    cpu.step();
+                    println!("{:?}", cpu);
+                    cpu.step();
+                    println!("{:?}", cpu);
+                    cpu.step();
+                    println!("{:?}", cpu);
+                    cpu.step();
+                    println!("{:?}", cpu);
+                    cpu.step();
+                    println!("{:?}", cpu);
+                    cpu.step();
+                    println!("{:?}", cpu);
+                    println!("{:04X}", cpu.pop_word());
+                    // for i in 0x99E0..0x99EB {
+                    //     println!("{:02x}", cpu.load_byte(i));
+                    // }
                     break 'running
                 },
                 _ => ()

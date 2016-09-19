@@ -35,7 +35,7 @@ impl Gpu {
             lcd_status: 0,
             scroll_x: 0,
             scroll_y: 0,
-            ly: 148,
+            ly: 0x94,
             lyc: 0,
             bg_palette: 0xFC,
             sprite_palette_0: 0xFF,
@@ -47,9 +47,14 @@ impl Gpu {
         }
     }
 
-    // pub fn vram_load(&mut self, address: u16) -> u8
+    pub fn vram_load(&mut self, address: u16) -> u8 {
+        self.vram[address as usize]
+    }
 
     pub fn vram_store(&mut self, address: u16, value: u8) {
+        if value != 0 && value != 0x2F {
+            print!("{:04x} - {:02x}  ", address - 0x8000, value);
+        }
         self.vram[address as usize] = value;
     }
 
@@ -65,7 +70,6 @@ impl Gpu {
             // 0x46 => {} // DMACONT - DMA Transfer Controller
             // 0x48 => {} // OBJ0PAL - Sprite palette #0
             // 0x49 => {} // OBJ1PAL - Sprite palette #1
-            // 0x4A => {} // WNDPOSY - Window Y position
             // 0x4B => {} // WNDPOSX - Window X position
             _ => panic!("Can't load from GPU yet (0x{:02X})", address)
         }
@@ -84,8 +88,8 @@ impl Gpu {
             0x47 => { self.bg_palette = value },
             0x48 => { self.sprite_palette_0 = value },
             0x49 => { self.sprite_palette_1 = value },
-            // 0x4A => {} // WNDPOSY - Window Y position
-            // 0x4B => {} // WNDPOSX - Window X position
+            0x4A => { self.window_x = value },
+            0x4B => { self.window_y = value },
             _ => panic!("Can't store in GPU yet (0x{:02X})", address)
         }
     }
