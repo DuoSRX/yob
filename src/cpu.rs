@@ -31,15 +31,29 @@ impl Cpu {
     }
 
     pub fn step(&mut self) {
-        let pc = self.registers.pc;
-        let sp = self.registers.sp;
-        let b = self.load_byte(pc);
-        print!("{:04x} {:02x}  ", pc, b);
-        print!("{:?}", self);
-        println!(" Stack:{:04x}", self.load_word(sp));
+        // let pc = self.registers.pc;
+        // let sp = self.registers.sp;
+        // let b = self.load_byte(pc);
+        // print!("{:04x} {:02x}  {:?}", pc, b, self);
+        // println!(" Stack:{:04x}", self.load_word(sp));
+
+        // Hard coded fake interrupts to boot Tetris
+        match self.registers.pc {
+            0x02B4 => { self.memory.gpu.ly = 0x94 }
+            0x287E => { self.memory.gpu.ly = 0x91 }
+            _ => {}
+        }
         let instruction = self.load_byte_and_inc_pc();
-        // println!("");
         self.execute_instruction(instruction);
+
+        // if self.interrupt {
+        //     let int_enable = self.memory.interrupt_enable;
+        //     let int_flags = self.memory.interrupt_flags;
+        //     let interrupts = int_enable & int_flags;
+
+        //     if interrupts != {
+        //     }
+        // }
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
@@ -310,7 +324,7 @@ impl Cpu {
 
     pub fn execute_cb_instruction(&mut self, instr: u8) {
         use registers::Register8::{A,B,C,D,E,H,L};
-        use registers::Register16::{AF,BC,DE,HL,SP};
+        // use registers::Register16::{AF,BC,DE,HL,SP};
 
         match instr {
             0x30 => self.swap(B),

@@ -78,7 +78,7 @@ impl Registers {
     }
 
     pub fn test_flag(&self, flag: u8) -> bool {
-        if self.f & flag != 0 { true } else { false }
+        self.f & flag != 0
     }
 
     pub fn af(&self) -> u16 {

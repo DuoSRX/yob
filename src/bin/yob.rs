@@ -1,7 +1,7 @@
 extern crate yob;
 extern crate sdl2;
 
-// use sdl2::pixels::PixelFormatEnum;
+use sdl2::pixels::PixelFormatEnum;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
@@ -27,46 +27,28 @@ fn main() {
     renderer.clear();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
-    // let mut texture = renderer.create_texture_target(PixelFormatEnum::BGR24, 256, 240).unwrap();
+    let mut texture = renderer.create_texture_target(PixelFormatEnum::BGR24, 160, 144).unwrap();
 
     let mut cpu = Cpu::new();
     cpu.reset();
-    let mut cycles = 0u64;
 
     'running: loop {
         cpu.step();
-        cycles += 1;
-        // if cycles >= 10000 {
-        //     break 'running;
-        // }
-            // println!("{:04x} {:02x}", cpu.registers.pc, cpu.memory.gpu.vram[0]);
-            // for i in 0x8000..0x8011 {
-            //     println!("{:02x}", cpu.load_byte(i));
-            // }
-        //     break 'running;
-        // }
 
+        if cpu.memory.gpu.new_frame {
+            texture.update(None, &cpu.memory.gpu.frame_content, 160 * 3).unwrap();
+            renderer.clear();
+            renderer.copy(&texture, None, None);
+            renderer.present();
+        }
+        cpu.memory.gpu.new_frame = false;
 
         while let Some(event) = event_pump.poll_event() {
             match event {
+                Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+                    cpu.memory.gpu.step(0);
+                }
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    println!("{:?}", cpu);
-                    cpu.step();
-                    println!("{:?}", cpu);
-                    cpu.step();
-                    println!("{:?}", cpu);
-                    cpu.step();
-                    println!("{:?}", cpu);
-                    cpu.step();
-                    println!("{:?}", cpu);
-                    cpu.step();
-                    println!("{:?}", cpu);
-                    cpu.step();
-                    println!("{:?}", cpu);
-                    println!("{:04X}", cpu.pop_word());
-                    // for i in 0x99E0..0x99EB {
-                    //     println!("{:02x}", cpu.load_byte(i));
-                    // }
                     break 'running
                 },
                 _ => ()

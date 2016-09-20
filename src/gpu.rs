@@ -14,20 +14,11 @@ pub struct Gpu {
     pub oam: [u8; 0xA0],
     pub vram: [u8; 0x2000],
     // TODO: DMACONT
+
+    pub new_frame: bool,
+    pub frame_content: [u8; 160 * 144 * 3],
 }
 
-// 0x40 => {} // LDCCONT - LCD Control
-// 0x41 => {} // LCDSTAT - LCD Status
-// 0x42 => {} // SCROLLY - Scroll Y
-// 0x43 => {} // SCROLLX - Scroll X
-// 0x44 => {} // CURLINE - Current scanline
-// 0x45 => {} // CMPLINE - Scanline comparison
-// 0x47 => {} // BGRDPAL - Background palette
-// 0x48 => {} // OBJ0PAL - Sprite palette #0
-// 0x49 => {} // OBJ1PAL - Sprite palette #1
-// 0x4A => {} // WNDPOSY - Window Y position
-// 0x4B => {} // WNDPOSX - Window X position
-// 0x46 => {} // DMACONT - DMA Transfer Controller
 impl Gpu {
     pub fn new() -> Gpu {
         Gpu {
@@ -35,7 +26,7 @@ impl Gpu {
             lcd_status: 0,
             scroll_x: 0,
             scroll_y: 0,
-            ly: 0x94,
+            ly: 0x91,
             lyc: 0,
             bg_palette: 0xFC,
             sprite_palette_0: 0xFF,
@@ -44,7 +35,48 @@ impl Gpu {
             window_y: 0,
             oam: [0; 0xA0],
             vram: [0; 0x2000],
+            new_frame: false,
+            frame_content: [0xFF; 160 * 144 * 3],
         }
+    }
+
+    pub fn step(&mut self, _cycles: u64) {
+        for x in 0..16 {
+            for y in 0..16 {
+                self.draw_tile(x, y);
+                // println!("{},{}", x, y);
+            }
+        }
+
+        self.new_frame = true;
+    }
+
+    fn draw_tile(&mut self, x_offset: u16, y_offset: u16) {
+        for y in 0..8 {
+            let plane0 = self.vram_load(y as u16 * 2 + (x_offset * 16) + (y_offset * 16 * 16));
+            let plane1 = self.vram_load(y as u16 * 2 + 1 + (x_offset * 16) + (y_offset * 16 * 16));
+            // println!("{:08b}", plane0);
+            // println!("{:08b}", plane0);
+
+            for x in 0..8 {
+                // let bit0 = (plane0 >> x) & 1;
+                // let bit1 = (plane1 >> x) & 1;
+                let bit0 = (plane0 >> ((7 - ((x % 8) as u8)) as usize)) & 1;
+                let bit1 = (plane1 >> ((7 - ((x % 8) as u8)) as usize)) & 1;
+                let result = (bit1 << 1) | bit0;
+                let c = (result << 6) as u32;
+                self.set_pixel(x as u32 + (x_offset as u32 * 8), y + (y_offset as u32 * 8), (c << 8) | (c << 16) | (c << 24));
+            }
+        }
+    }
+
+    fn set_pixel(&mut self, x: u32, y: u32, color: u32) {
+        self.frame_content[((y * 160 + x) * 3 + 0) as usize] = (color >> 24) as u8;
+        self.frame_content[((y * 160 + x) * 3 + 1) as usize] = (color >> 16) as u8;
+        self.frame_content[((y * 160 + x) * 3 + 2) as usize] = (color >> 8) as u8;
+    }
+
+    pub fn reset(&mut self) {
     }
 
     pub fn vram_load(&mut self, address: u16) -> u8 {
@@ -52,9 +84,6 @@ impl Gpu {
     }
 
     pub fn vram_store(&mut self, address: u16, value: u8) {
-        if value != 0 && value != 0x2F {
-            print!("{:04x} - {:02x}  ", address - 0x8000, value);
-        }
         self.vram[address as usize] = value;
     }
 
@@ -73,7 +102,6 @@ impl Gpu {
             // 0x4B => {} // WNDPOSX - Window X position
             _ => panic!("Can't load from GPU yet (0x{:02X})", address)
         }
-        // panic!("Can't load from GPU yet ({:02X})", address);
     }
 
     pub fn store(&mut self, address: u8, value: u8) {
