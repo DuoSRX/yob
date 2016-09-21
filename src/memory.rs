@@ -9,8 +9,8 @@ pub struct Memory {
     pub work_ram: [u8; 0x2000], // 8 kB of RAM
     pub high_ram: [u8; 0x7F], // from 0xFF80 to 0xFFFF
 
-    interrupt_flags: u8,
-    interrupt_enable: u8,
+    pub interrupt_flags: u8,
+    pub interrupt_enable: u8,
 }
 
 // http://gbdev.gg8.se/wiki/articles/Memory_Map

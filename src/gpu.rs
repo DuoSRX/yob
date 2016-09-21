@@ -17,6 +17,17 @@ pub struct Gpu {
 
     pub new_frame: bool,
     pub frame_content: [u8; 160 * 144 * 3],
+
+    pub mode: VideoMode,
+    pub cycles: u64
+}
+
+#[derive(Copy,Clone,PartialEq)]
+pub enum VideoMode {
+    HBlank = 0x0,
+    VBLank = 0x1,
+    ReadOam = 0x2,
+    ReadRam = 0x3
 }
 
 impl Gpu {
@@ -37,26 +48,60 @@ impl Gpu {
             vram: [0; 0x2000],
             new_frame: false,
             frame_content: [0xFF; 160 * 144 * 3],
+            mode: VideoMode::HBlank,
+            cycles: 0,
         }
     }
 
-    pub fn step(&mut self, _cycles: u64) {
+    pub fn step(&mut self, cycles: u64) {
+        self.cycles = cycles;
+
+        if self.cycles > 455 {
+            self.cycles -= 456;
+            self.ly = (self.ly + 1) % 154;
+
+            if self.ly >= 144 && self.mode != VideoMode::VBLank {
+                // switch to VBlank
+            }
+
+            if self.ly == self.lyc {
+                // set LCDSTAT interrupt flag
+            }
+        }
+
+        if self.ly < 144 {
+            match self.cycles {
+                0...80   => {} // switch to ReadOam
+                80...252 => {} // switch to ReadRam
+                _        => {} // switch to HBLank
+            }
+        }
+
         for x in 0..16 {
             for y in 0..16 {
                 self.draw_tile(x, y);
-                // println!("{},{}", x, y);
             }
         }
 
         self.new_frame = true;
     }
 
+    pub fn switch_mode(&mut self, mode: VideoMode) {
+        self.mode = mode;
+
+        // We should set the correct interrupt flags here
+        match self.mode {
+            VideoMode::HBlank => { self.make_line(); }
+            VideoMode::VBLank => {}
+            VideoMode::ReadOam => {}
+            VideoMode::ReadRam => {} // Nothing to do here
+        }
+    }
+
     fn draw_tile(&mut self, x_offset: u16, y_offset: u16) {
         for y in 0..8 {
             let plane0 = self.vram_load(y as u16 * 2 + (x_offset * 16) + (y_offset * 16 * 16));
             let plane1 = self.vram_load(y as u16 * 2 + 1 + (x_offset * 16) + (y_offset * 16 * 16));
-            // println!("{:08b}", plane0);
-            // println!("{:08b}", plane0);
 
             for x in 0..8 {
                 // let bit0 = (plane0 >> x) & 1;
@@ -68,6 +113,10 @@ impl Gpu {
                 self.set_pixel(x as u32 + (x_offset as u32 * 8), y + (y_offset as u32 * 8), (c << 8) | (c << 16) | (c << 24));
             }
         }
+    }
+
+    fn make_line(&mut self) {
+        let sc = self.ly;
     }
 
     fn set_pixel(&mut self, x: u32, y: u32, color: u32) {
@@ -112,7 +161,7 @@ impl Gpu {
             0x43 => { self.scroll_y = value },
             0x44 => { self.ly = 0 },
             // 0x45 => {} // CMPLINE - Scanline comparison
-            // 0x46 => {} // DMACONT - DMA Transfer Controller
+            0x46 => {} // DMACONT - DMA Transfer Controller // TODO
             0x47 => { self.bg_palette = value },
             0x48 => { self.sprite_palette_0 = value },
             0x49 => { self.sprite_palette_1 = value },

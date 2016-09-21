@@ -11,6 +11,7 @@ pub struct Cpu {
     pub memory: Memory,
     pub halt: bool,
     pub interrupt: bool,
+    pub cycles: u64
 }
 
 impl Cpu {
@@ -20,6 +21,7 @@ impl Cpu {
             memory: Memory::new(),
             halt: false,
             interrupt: false,
+            cycles: 0,
         }
     }
 
@@ -30,7 +32,7 @@ impl Cpu {
         self.registers.pc = 0x100;
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> u64 {
         // let pc = self.registers.pc;
         // let sp = self.registers.sp;
         // let b = self.load_byte(pc);
@@ -46,14 +48,11 @@ impl Cpu {
         let instruction = self.load_byte_and_inc_pc();
         self.execute_instruction(instruction);
 
-        // if self.interrupt {
-        //     let int_enable = self.memory.interrupt_enable;
-        //     let int_flags = self.memory.interrupt_flags;
-        //     let interrupts = int_enable & int_flags;
+        if self.interrupt {
+            self.interrupt();
+        }
 
-        //     if interrupts != {
-        //     }
-        // }
+        1u64 // FIXME: replace with real cycles count
     }
 
     pub fn execute_instruction(&mut self, instr: u8) {
@@ -367,10 +366,12 @@ impl Cpu {
     }
 
     pub fn load_byte(&mut self, address: u16) -> u8 {
+        self.cycles += 1;
         self.memory.load(address)
     }
 
     pub fn store_byte(&mut self, address: u16, value: u8) {
+        self.cycles += 1;
         self.memory.store(address, value);
     }
 
@@ -388,12 +389,14 @@ impl Cpu {
     }
 
     pub fn load_word(&mut self, address: u16) -> u16 {
+        self.cycles += 2;
         let hi = (self.memory.load(address + 1) as u16) << 8;
         let lo = self.memory.load(address) as u16;
         hi | lo
     }
 
     pub fn store_word(&mut self, address: u16, value: u16) {
+        self.cycles += 2;
         let lo = value & 0xFF;
         let hi = (value >> 8) & 0xFF;
         self.store_byte(address, lo as u8);
@@ -414,6 +417,32 @@ impl Cpu {
         let word = self.load_word(sp);
         self.registers.sp += 2;
         word
+    }
+
+    /*
+     * http://gbdev.gg8.se/files/docs/mirrors/pandocs.html#interrupts
+     * Bit 0: V-Blank  INT 40h
+     * Bit 1: LCD STAT INT 48h
+     * Bit 2: Timer    INT 50h
+     * Bit 3: Serial   INT 58h
+     * Bit 4: Joypad   INT 60h
+     */
+    fn interrupt(&mut self) {
+        let int_enable = self.memory.interrupt_enable;
+        let int_flags = self.memory.interrupt_flags;
+        let interrupts = int_enable & int_flags;
+
+        if interrupts != 0 {
+            let int_number = interrupts.trailing_zeros();
+            // TODO: Check for nested interrupts
+            // Reset the triggered interrupt flag
+            self.memory.interrupt_flags &= !(1 << int_number);
+            self.interrupt = false;
+            match int_number {
+                0 => self.rst(0x40),
+                _ => { } // TODO: Other interrupts
+            }
+        }
     }
 
     // Instructions implementations
@@ -618,17 +647,20 @@ impl Cpu {
     fn jp(&mut self) {
         let address = self.load_word_and_inc_pc();
         self.registers.pc = address;
+        self.cycles += 1;
     }
 
     fn jp_hl(&mut self) {
         let address = self.registers.hl();
         self.registers.pc = address;
+        self.cycles += 1;
     }
 
     fn jp_if(&mut self, flag: u8) {
         let address = self.load_word_and_inc_pc();
         if self.registers.test_flag(flag) {
             self.registers.pc = address;
+            self.cycles += 1;
         }
     }
 
@@ -636,18 +668,21 @@ impl Cpu {
         let address = self.load_word_and_inc_pc();
         if !self.registers.test_flag(flag) {
             self.registers.pc = address;
+            self.cycles += 1;
         }
     }
 
     fn jr(&mut self) {
         let offset = self.load_byte_and_inc_pc() as i8;
         self.registers.pc = (self.registers.pc as i16 + offset as i16) as u16;
+        self.cycles += 1;
     }
 
     fn jr_if(&mut self, flag: u8) {
         let offset = self.load_byte_and_inc_pc() as i8;
         if self.registers.test_flag(flag) {
             self.registers.pc = (self.registers.pc as i16 + offset as i16) as u16;
+            self.cycles += 1;
         }
     }
 
@@ -655,6 +690,7 @@ impl Cpu {
         let offset = self.load_byte_and_inc_pc() as i8;
         if !self.registers.test_flag(flag) {
             self.registers.pc = (self.registers.pc as i16 + offset as i16) as u16;
+            self.cycles += 1;
         }
     }
 
@@ -663,6 +699,7 @@ impl Cpu {
         let return_address = self.registers.pc;
         self.push_word(return_address);
         self.registers.pc = address;
+        self.cycles += 1;
     }
 
     fn call(&mut self) {
@@ -686,6 +723,7 @@ impl Cpu {
 
     fn ret(&mut self) {
         self.registers.pc = self.pop_word();
+        self.cycles += 1;
     }
 
     fn ret_if(&mut self, flag: u8) {
@@ -732,6 +770,7 @@ impl Cpu {
         let pc = self.registers.pc;
         self.push_word(pc);
         self.registers.pc = address;
+        self.cycles += 1;
     }
 
     fn daa(&mut self) {
